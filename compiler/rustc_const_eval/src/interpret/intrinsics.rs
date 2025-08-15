@@ -163,6 +163,7 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                     ty::Adt(adt, _) => {
                         ConstValue::from_target_usize(adt.variants().len() as u64, &tcx)
                     }
+                    ty::Field(..) => todo!("field_projections"),
                     ty::Alias(..) | ty::Param(_) | ty::Placeholder(_) | ty::Infer(_) => {
                         throw_inval!(TooGeneric)
                     }

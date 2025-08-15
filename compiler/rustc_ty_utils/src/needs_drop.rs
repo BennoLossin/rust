@@ -260,6 +260,9 @@ where
                             queue_type(self, required);
                         }
                     }
+
+                    ty::Field(..) => todo!("field_projections"),
+
                     ty::Alias(..) | ty::Array(..) | ty::Placeholder(_) | ty::Param(_) => {
                         if ty == component {
                             // Return the type to the caller: they may be able

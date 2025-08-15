@@ -346,6 +346,11 @@ fn evaluate_host_effect_for_destruct_goal<'tcx>(
             const_conditions
         }
 
+        ty::Field(_, _) => {
+            // TODO(field_projections): we should allow users to `impl Drop for field_of!(...)`
+            todo!("field_projections")
+        }
+
         ty::Array(ty, _) | ty::Pat(ty, _) | ty::Slice(ty) => {
             thin_vec![ty::TraitRef::new(tcx, destruct_def_id, [ty])]
         }

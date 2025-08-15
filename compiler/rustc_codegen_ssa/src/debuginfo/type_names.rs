@@ -119,6 +119,15 @@ fn push_debuginfo_type_name<'tcx>(
                 push_generic_params_internal(tcx, args, output, visited);
             }
         }
+        ty::Field(ty, field_path) => {
+            push_debuginfo_type_name(tcx, ty, qualified, output, visited);
+            for field_idx in field_path {
+                output.push('.');
+                output.push('$');
+                // TODO(field_projections): actually print name & remove dollar
+                output.push_str(&field_idx.index().to_string());
+            }
+        }
         ty::Tuple(component_types) => {
             if cpp_like_debuginfo {
                 output.push_str("tuple$<");

@@ -734,6 +734,7 @@ where
                 | ty::Slice(_)
                 | ty::Foreign(..)
                 | ty::Adt(..)
+                | ty::Field(..)
                 | ty::Alias(..)
                 | ty::Param(_)
                 | ty::Placeholder(..)
@@ -1243,6 +1244,7 @@ where
             | ty::Never
             | ty::Tuple(_)
             | ty::Adt(_, _)
+            | ty::Field(_, _)
             | ty::UnsafeBinder(_) => check_impls(),
             ty::Error(_) => None,
         }

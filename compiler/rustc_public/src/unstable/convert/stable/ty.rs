@@ -413,6 +413,11 @@ impl<'tcx> Stable<'tcx> for ty::TyKind<'tcx> {
                 tables.adt_def(adt_def.did()),
                 generic_args.stable(tables, cx),
             )),
+            #[allow(unreachable_code)]
+            ty::Field(ty, _field_path) => TyKind::RigidTy(RigidTy::Field(
+                ty.stable(tables, cx),
+                todo!("field_projections"), // TODO(field_projections): probably `field_path.stable(tables, cx)`
+            )),
             ty::Foreign(def_id) => TyKind::RigidTy(RigidTy::Foreign(tables.foreign_def(*def_id))),
             ty::Str => TyKind::RigidTy(RigidTy::Str),
             ty::Array(ty, constant) => {

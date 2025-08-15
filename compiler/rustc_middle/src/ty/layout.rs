@@ -813,6 +813,11 @@ where
                     bug!("TyAndLayout::field({:?}): not applicable", this)
                 }
 
+                ty::Field(_, _) => {
+                    // TODO(field_projections): no idea about this, is this just a `bug!`?
+                    todo!("field_projections")
+                }
+
                 ty::UnsafeBinder(bound_ty) => {
                     let ty = tcx.instantiate_bound_regions_with_erased(bound_ty.into());
                     field_ty_or_layout(TyAndLayout { ty, ..this }, cx, i)

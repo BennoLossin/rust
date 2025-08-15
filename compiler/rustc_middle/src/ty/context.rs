@@ -148,6 +148,7 @@ impl<'tcx> Interner for TyCtxt<'tcx> {
     type PatList = &'tcx List<Pattern<'tcx>>;
     type Safety = hir::Safety;
     type Abi = ExternAbi;
+    type FieldPath = &'tcx List<FieldIdx>;
     type Const = ty::Const<'tcx>;
     type PlaceholderConst = ty::PlaceholderConst;
 
@@ -529,6 +530,7 @@ impl<'tcx> Interner for TyCtxt<'tcx> {
             | ty::Uint(_)
             | ty::Float(_)
             | ty::Adt(_, _)
+            | ty::Field(_, _)
             | ty::Foreign(_)
             | ty::Str
             | ty::Array(_, _)
@@ -802,6 +804,8 @@ impl<'tcx> rustc_type_ir::inherent::Abi<TyCtxt<'tcx>> for ExternAbi {
         matches!(self, ExternAbi::Rust)
     }
 }
+
+impl<'tcx> rustc_type_ir::inherent::FieldPath<TyCtxt<'tcx>> for &'tcx List<FieldIdx> {}
 
 impl<'tcx> rustc_type_ir::inherent::Safety<TyCtxt<'tcx>> for hir::Safety {
     fn safe() -> Self {
@@ -2511,6 +2515,7 @@ impl<'tcx> TyCtxt<'tcx> {
                 fmt,
                 self,
                 Adt,
+                Field,
                 Array,
                 Slice,
                 RawPtr,

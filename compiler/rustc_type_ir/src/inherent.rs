@@ -164,6 +164,7 @@ pub trait Ty<I: Interner<Ty = Self>>:
             | ty::Uint(_)
             | ty::Float(_)
             | ty::Adt(_, _)
+            | ty::Field(_, _)
             | ty::Foreign(_)
             | ty::Array(_, _)
             | ty::Pat(_, _)
@@ -618,6 +619,10 @@ pub trait AdtDef<I: Interner>: Copy + Debug + Hash + Eq {
     fn is_fundamental(self) -> bool;
 
     fn destructor(self, interner: I) -> Option<AdtDestructorKind>;
+}
+
+pub trait FieldPath<I: Interner>: Copy + Debug + Hash + Eq {
+    /* nothing yet */
 }
 
 pub trait ParamEnv<I: Interner>: Copy + Debug + Hash + Eq + TypeFoldable<I> {

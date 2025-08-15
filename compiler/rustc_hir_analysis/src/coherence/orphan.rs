@@ -151,6 +151,12 @@ pub(crate) fn orphan_check_impl(
                 },
             ),
 
+            ty::Field(_ty, _field_path) => {
+                // TODO(field_projections): again as the other orphan check, we want to only allow
+                // impls if all types involved in this projection are local except the last one.
+                todo!("field_projections")
+            }
+
             // extern { type OpaqueType; }
             // impl AutoTrait for OpaqueType {}
             ty::Foreign(did) => (

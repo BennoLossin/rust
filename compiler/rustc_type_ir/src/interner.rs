@@ -129,6 +129,7 @@ pub trait Interner:
         + SliceLike<Item = Self::Pat>;
     type Safety: Safety<Self>;
     type Abi: Abi<Self>;
+    type FieldPath: FieldPath<Self>;
 
     // Kinds of consts
     type Const: Const<Self>;

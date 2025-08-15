@@ -885,6 +885,7 @@ impl TyCoercionStability {
                 | ty::Str
                 | ty::Slice(..)
                 | ty::Adt(..)
+                | ty::Field(..)
                 | ty::Foreign(_)
                 | ty::FnDef(..)
                 | ty::Coroutine(..)

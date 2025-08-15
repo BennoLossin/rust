@@ -564,6 +564,7 @@ impl<'tcx> LinkCollector<'_, 'tcx> {
             ty::Adt(ty::AdtDef(Interned(&ty::AdtDefData { did, .. }, _)), _) | ty::Foreign(did) => {
                 Res::from_def_id(self.cx.tcx, did)
             }
+            ty::Field(..) => todo!("field_projections"),
             ty::Alias(..)
             | ty::Closure(..)
             | ty::CoroutineClosure(..)

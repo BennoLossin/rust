@@ -183,6 +183,8 @@ impl<'tcx> TypeFolder<TyCtxt<'tcx>> for TransformTy<'tcx> {
                 }
             }
 
+            ty::Field(..) => todo!("field_projections"),
+
             ty::Ref(..) => {
                 if self.options.contains(TransformTyOptions::GENERALIZE_POINTERS) {
                     if t.is_mutable_ptr() {

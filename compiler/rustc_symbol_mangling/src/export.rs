@@ -62,6 +62,9 @@ impl<'tcx> AbiHashStable<'tcx> for Ty<'tcx> {
             ty::Uint(uint_ty) => uint_ty.name_str().abi_hash(tcx, hasher),
             ty::Float(float_ty) => float_ty.name_str().abi_hash(tcx, hasher),
 
+            // TODO(field_projections): truly no idea for this.
+            ty::Field(..) => todo!("field_projections"),
+
             ty::Adt(adt_def, args) => {
                 adt_def.is_struct().abi_hash(tcx, hasher);
                 adt_def.is_enum().abi_hash(tcx, hasher);

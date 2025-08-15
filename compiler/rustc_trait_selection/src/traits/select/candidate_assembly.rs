@@ -683,6 +683,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
                 | ty::Uint(_)
                 | ty::Float(_)
                 | ty::Adt(_, _)
+                | ty::Field(_, _)
                 | ty::Foreign(_)
                 | ty::Str
                 | ty::Array(_, _)
@@ -863,6 +864,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
                 | ty::Pat(_, _)
                 | ty::Slice(_)
                 | ty::Adt(..)
+                | ty::Field(..)
                 | ty::RawPtr(_, _)
                 | ty::Ref(..)
                 | ty::FnDef(..)
@@ -1204,7 +1206,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
             }
 
             // Fallback to whatever user-defined impls or param-env clauses exist in this case.
-            ty::Adt(..) | ty::Alias(..) | ty::Param(..) | ty::Placeholder(..) => {}
+            ty::Adt(..) | ty::Field(..) | ty::Alias(..) | ty::Param(..) | ty::Placeholder(..) => {}
 
             ty::Infer(ty::TyVar(_)) => {
                 candidates.ambiguous = true;
@@ -1243,6 +1245,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
             | ty::Closure(..)
             | ty::CoroutineClosure(..)
             | ty::Never
+            | ty::Field(..)
             | ty::Error(_) => {
                 candidates.vec.push(SizedCandidate);
             }
@@ -1317,6 +1320,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
             | ty::Uint(_)
             | ty::Float(_)
             | ty::Adt(_, _)
+            | ty::Field(_, _)
             | ty::Foreign(_)
             | ty::Str
             | ty::Array(_, _)
@@ -1357,6 +1361,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
             | ty::Uint(_)
             | ty::Float(_)
             | ty::Adt(..)
+            | ty::Field(..)
             | ty::Foreign(..)
             | ty::Str
             | ty::Array(..)
@@ -1398,6 +1403,7 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
         match obligation.predicate.self_ty().skip_binder().kind() {
             ty::Ref(..)
             | ty::Adt(..)
+            | ty::Field(..)
             | ty::Tuple(_)
             | ty::Array(..)
             | ty::FnDef(..)

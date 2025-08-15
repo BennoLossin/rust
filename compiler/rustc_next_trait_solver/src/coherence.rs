@@ -419,6 +419,22 @@ where
                     self.found_non_local_ty(ty)
                 }
             }
+            ty::Field(_ty, _field_path) => {
+                // TODO(field_projections): this is probably a bit tricky, but what we want to do
+                // here is only consider a field representing type local if all types involved in
+                // the field chain except the last one are local types.
+                //
+                // so we want todo something like:
+                //
+                // for field_ty in [_ty].chain(_field_path.take(_field_path.len() - 1)) {
+                //     if !field_ty.is_local() {
+                //         self.found_non_local_ty(field_ty);
+                //     }
+                // }
+                //
+                // I don't think the behavior should be different for fundamental types.
+                todo!("field_projections")
+            }
             ty::Foreign(def_id) => {
                 if self.def_id_is_local(def_id) {
                     ControlFlow::Break(OrphanCheckEarlyExit::LocalTy(ty))

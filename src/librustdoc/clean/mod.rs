@@ -2079,6 +2079,7 @@ pub(crate) fn clean_middle_ty<'tcx>(
             let path = clean_middle_path(cx, did, false, ThinVec::new(), bound_ty.rebind(args));
             Type::Path { path }
         }
+        ty::Field(..) => todo!("field_projections"),
         ty::Foreign(did) => {
             inline::record_extern_fqn(cx, did, ItemType::ForeignType);
             let path = clean_middle_path(
