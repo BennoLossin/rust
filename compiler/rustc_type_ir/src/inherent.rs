@@ -5,6 +5,7 @@
 
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::ControlFlow;
 
 use rustc_ast_ir::Mutability;
 
@@ -170,6 +171,7 @@ pub trait Ty<I: Interner<Ty = Self>>:
             | ty::Uint(_)
             | ty::Float(_)
             | ty::Adt(_, _)
+            | ty::Field(_, _)
             | ty::Foreign(_)
             | ty::Array(_, _)
             | ty::Pat(_, _)
@@ -624,6 +626,32 @@ pub trait AdtDef<I: Interner>: Copy + Debug + Hash + Eq {
     fn is_fundamental(self) -> bool;
 
     fn destructor(self, interner: I) -> Option<AdtDestructorKind>;
+}
+
+// TODO(field_projections): do we really need this?
+pub trait FieldPathSegment<I: Interner>: Copy + Debug + Hash + Eq {
+    /* nothing yet */
+}
+
+pub trait FieldPath<I: Interner>: Copy + Debug + Hash + Eq {
+    fn visit<V: FieldPathVisitor<I>>(self, container: I::Ty, visitor: V, interner: I) -> V::Output;
+}
+
+pub trait FieldPathVisitor<I: Interner> {
+    type Output;
+
+    fn visit_segment(
+        &mut self,
+        base: I::Ty,
+        name: I::Symbol,
+        field_ty: I::Ty,
+    ) -> ControlFlow<Self::Output>;
+
+    fn visit_final(&mut self, field_ty: I::Ty, name: I::Symbol) -> Self::Output;
+
+    fn unsupported_type(&mut self, ty: I::Ty) -> Self::Output;
+
+    fn unknown_field(&mut self, ty: I::Ty, unknown_field: I::Symbol) -> Self::Output;
 }
 
 pub trait ParamEnv<I: Interner>: Copy + Debug + Hash + Eq + TypeFoldable<I> {

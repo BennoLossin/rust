@@ -39,8 +39,8 @@ use rustc_middle::middle::stability::AllowUnstable;
 use rustc_middle::mir::interpret::LitToConstInput;
 use rustc_middle::ty::print::PrintPolyTraitRefExt as _;
 use rustc_middle::ty::{
-    self, Const, GenericArgKind, GenericArgsRef, GenericParamDefKind, Ty, TyCtxt, TypeVisitableExt,
-    TypingMode, Upcast, fold_regions,
+    self, Const, FieldPathSegment, GenericArgKind, GenericArgsRef, GenericParamDefKind, Ty, TyCtxt,
+    TypeVisitableExt, TypingMode, Upcast, fold_regions,
 };
 use rustc_middle::{bug, span_bug};
 use rustc_session::lint::builtin::AMBIGUOUS_ASSOCIATED_ITEMS;
@@ -2548,6 +2548,13 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
             hir::TyKind::Array(ty, length) => {
                 let length = self.lower_const_arg(length, FeedConstTy::No);
                 Ty::new_array_with_const_len(tcx, self.lower_ty(ty), length)
+            }
+            hir::TyKind::FieldOf(container, fields) => {
+                let container = self.lower_ty(container);
+                let fields = self.tcx().mk_field_path_from_iter(
+                    fields.iter().map(|field| FieldPathSegment(field.name)),
+                );
+                Ty::new_field_of(tcx, container, fields)
             }
             hir::TyKind::Typeof(e) => tcx.type_of(e.def_id).instantiate_identity(),
             hir::TyKind::Infer(()) => {

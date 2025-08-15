@@ -504,6 +504,8 @@ pub(crate) fn encode_ty<'tcx>(
             typeid.push_str(&s);
         }
 
+        ty::Field(..) => todo!("field_projections"),
+
         ty::Foreign(def_id) => {
             // <length><name>, where <name> is <unscoped-name>
             let mut s = String::new();

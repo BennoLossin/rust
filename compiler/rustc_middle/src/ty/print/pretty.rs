@@ -784,6 +784,12 @@ pub trait PrettyPrinter<'tcx>: Printer<'tcx> + fmt::Write {
                 },
             },
             ty::Adt(def, args) => self.print_def_path(def.did(), args)?,
+            ty::Field(ty, field_path) => {
+                self.pretty_print_type(ty)?;
+                for field in field_path {
+                    write!(self, ".{}", field.0)?;
+                }
+            }
             ty::Dynamic(data, r, repr) => {
                 let print_r = self.should_print_optional_region(r);
                 if print_r {

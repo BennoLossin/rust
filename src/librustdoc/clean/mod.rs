@@ -1836,6 +1836,7 @@ pub(crate) fn clean_ty<'tcx>(ty: &hir::Ty<'tcx>, cx: &mut DocContext<'tcx>) -> T
         TyKind::UnsafeBinder(unsafe_binder_ty) => {
             UnsafeBinder(Box::new(clean_unsafe_binder_ty(unsafe_binder_ty, cx)))
         }
+        TyKind::FieldOf(..) => todo!("field_projections"),
         // Rustdoc handles `TyKind::Err`s by turning them into `Type::Infer`s.
         TyKind::Infer(())
         | TyKind::Err(_)
@@ -2079,6 +2080,7 @@ pub(crate) fn clean_middle_ty<'tcx>(
             let path = clean_middle_path(cx, did, false, ThinVec::new(), bound_ty.rebind(args));
             Type::Path { path }
         }
+        ty::Field(..) => todo!("field_projections"),
         ty::Foreign(did) => {
             inline::record_extern_fqn(cx, did, ItemType::ForeignType);
             let path = clean_middle_path(

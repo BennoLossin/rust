@@ -101,8 +101,8 @@ pub use self::region::{
 pub use self::rvalue_scopes::RvalueScopes;
 pub use self::sty::{
     AliasTy, Article, Binder, BoundTy, BoundTyKind, BoundVariableKind, CanonicalPolyFnSig,
-    CoroutineArgsExt, EarlyBinder, FnSig, InlineConstArgs, InlineConstArgsParts, ParamConst,
-    ParamTy, PolyFnSig, TyKind, TypeAndMut, TypingMode, UpvarArgs,
+    CoroutineArgsExt, EarlyBinder, FieldPathSegment, FnSig, InlineConstArgs, InlineConstArgsParts,
+    ParamConst, ParamTy, PolyFnSig, TyKind, TypeAndMut, TypingMode, UpvarArgs,
 };
 pub use self::trait_def::TraitDef;
 pub use self::typeck_results::{

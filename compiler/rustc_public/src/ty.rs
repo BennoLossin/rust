@@ -550,6 +550,7 @@ pub enum RigidTy {
     Uint(UintTy),
     Float(FloatTy),
     Adt(AdtDef, GenericArgs),
+    Field(Ty, /* TODO(field_projections): add `FieldPath` & remove dummy `Ty` here */ Ty),
     Foreign(ForeignDef),
     Str,
     Array(Ty, TyConst),

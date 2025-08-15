@@ -676,6 +676,9 @@ fn layout_of_uncached<'tcx>(
             tcx.mk_layout(layout)
         }
 
+        // TODO(field_projections): we currently give this type the never layout.
+        ty::Field(..) => tcx.mk_layout(LayoutData::never_type(cx)),
+
         ty::UnsafeBinder(bound_ty) => {
             let ty = tcx.instantiate_bound_regions_with_erased(bound_ty.into());
             cx.layout_of(ty)?.layout

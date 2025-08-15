@@ -53,7 +53,7 @@ pub unsafe trait PinnableField: UnalignedField {
 
 /// TODO
 #[unstable(feature = "field_projections", issue = "145383")]
-pub macro offset_of($Container:ty, $($fields:expr)+ $(,)?) {
-    // The `{}` is for better error messages
-    {builtin # field_of($Container, $($fields)+)}
+#[allow_internal_unstable(builtin_syntax)]
+pub macro field_of($Container:ty, $($fields:expr)+ $(,)?) {
+    builtin # field_of($Container, $($fields)+)
 }

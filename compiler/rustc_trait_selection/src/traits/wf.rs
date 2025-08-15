@@ -737,6 +737,9 @@ impl<'a, 'tcx> TypeVisitor<TyCtxt<'tcx>> for WfPredicates<'a, 'tcx> {
                 // WfScalar, WfParameter, etc
             }
 
+            // TODO(field_projections): is this correct?
+            ty::Field(..) => {}
+
             // Can only infer to `ty::Int(_) | ty::Uint(_)`.
             ty::Infer(ty::IntVar(_)) => {}
 

@@ -419,6 +419,66 @@ where
                     self.found_non_local_ty(ty)
                 }
             }
+            ty::Field(container, field_path) => {
+                let interner = self.infcx.cx();
+                field_path.visit(container, {
+                    struct Visitor<'b, 'a, Infcx, I: Interner, F>{
+                        checker: &'b mut OrphanChecker<'a ,Infcx, I, F>,
+                        first_local_type: Option<I::Ty>,
+                    }
+                    impl<'a, Infcx, F, I: Interner, E> FieldPathVisitor<I> for Visitor<'_, 'a, Infcx, I, F>
+                    where
+                        Infcx: InferCtxtLike<Interner = I>,
+                        I: Interner,
+                        F: FnMut(I::Ty) -> Result<I::Ty, E>,
+                    {
+                        type Output = <OrphanChecker::<'a, Infcx, I, F> as TypeVisitor<I>>::Result;
+
+                        fn visit_final(&mut self, _field_ty: I::Ty, _name: I::Symbol) -> Self::Output {
+                            if let Some(ty) = self.first_local_type.take() {
+                                ControlFlow::Break(OrphanCheckEarlyExit::LocalTy(ty))
+                            } else {
+                                // TODO(field_projections): don't have `bug!` available here?
+                                panic!("there must be at least one segment in a field path")
+                            }
+                        }
+
+                        fn visit_segment(
+                            &mut self,
+                            base: I::Ty,
+                            _name: I::Symbol,
+                            _field_ty: I::Ty,
+                        ) -> ControlFlow<Self::Output> {
+                            self.first_local_type.get_or_insert(base);
+                            let ty::Adt(def, _) = base.kind() else {
+                                // TODO(field_projections): replace when more than just adts are
+                                // supported
+                                todo!("field_projections")
+                            };
+                            // We don't check the field type for locality, since having a non-local
+                            // type as a field in a struct shouldn't make the field type non-local.
+                            if !self.checker.def_id_is_local(def.def_id()) {
+                                ControlFlow::Break(self.checker.found_non_local_ty(base))
+                            } else {
+                                ControlFlow::Continue(())
+                            }
+                        }
+
+                        fn unsupported_type(&mut self, _ty: I::Ty) -> Self::Output {
+                            // this should have already resulted in an earlier error
+                            self.checker.infcx.cx().delay_bug("unsupported type used in `field_of!`");
+                            ControlFlow::Continue(())
+                        }
+
+                        fn unknown_field(&mut self, _adt: I::Ty, _wanted_name: I::Symbol) -> Self::Output {
+                            // this should have already resulted in an earlier error
+                            self.checker.infcx.cx().delay_bug("unknown field used in `field_of!`");
+                            ControlFlow::Continue(())
+                        }
+                    }
+                    Visitor { checker: self, first_local_type: None }
+                }, interner)
+            }
             ty::Foreign(def_id) => {
                 if self.def_id_is_local(def_id) {
                     ControlFlow::Break(OrphanCheckEarlyExit::LocalTy(ty))

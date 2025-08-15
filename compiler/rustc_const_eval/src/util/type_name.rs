@@ -50,6 +50,8 @@ impl<'tcx> Printer<'tcx> for TypeNamePrinter<'tcx> {
                 Ok(())
             }
 
+            ty::Field(..) => todo!("field_projections"),
+
             // Types with identity (print the module path).
             ty::Adt(ty::AdtDef(Interned(&ty::AdtDefData { did: def_id, .. }, _)), args)
             | ty::FnDef(def_id, args)

@@ -779,6 +779,7 @@ impl<'rt, 'tcx, M: Machine<'tcx>> ValidityVisitor<'rt, 'tcx, M> {
             // The above should be all the primitive types. The rest is compound, we
             // check them by visiting their fields/variants.
             ty::Adt(..)
+            | ty::Field(..) // TODO(field_projections): correct?
             | ty::Tuple(..)
             | ty::Array(..)
             | ty::Slice(..)

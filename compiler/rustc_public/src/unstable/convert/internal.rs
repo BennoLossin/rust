@@ -156,6 +156,13 @@ impl RustcInternal for RigidTy {
             RigidTy::Adt(def, args) => {
                 rustc_ty::TyKind::Adt(def.internal(tables, tcx), args.internal(tables, tcx))
             }
+            #[allow(unreachable_code)]
+            RigidTy::Field(ty, _field_path) => {
+                rustc_ty::TyKind::Field(
+                    ty.internal(tables, tcx),
+                    todo!("field_projections"), // TODO(field_projections): probably `field_path.internal(tables, tcx)`
+                )
+            }
             RigidTy::Str => rustc_ty::TyKind::Str,
             RigidTy::Slice(ty) => rustc_ty::TyKind::Slice(ty.internal(tables, tcx)),
             RigidTy::RawPtr(ty, mutability) => {

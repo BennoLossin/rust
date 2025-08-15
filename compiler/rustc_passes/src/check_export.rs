@@ -289,6 +289,8 @@ impl<'tcx, 'a> TypeVisitor<TyCtxt<'tcx>> for ExportableItemsChecker<'tcx, 'a> {
                 return ty.super_visit_with(self);
             }
 
+            ty::Field(..) => todo!("field_projections"),
+
             ty::Int(_) | ty::Uint(_) | ty::Float(_) | ty::Bool | ty::Char | ty::Error(_) => {}
 
             ty::Array(_, _)

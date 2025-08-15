@@ -23,6 +23,7 @@ use crate::mir::interpret::{AllocId, ConstAllocation, CtfeProvenance};
 use crate::mir::mono::MonoItem;
 use crate::mir::{self};
 use crate::traits;
+use crate::ty::sty::FieldPathSegment;
 use crate::ty::{self, AdtDef, GenericArgsRef, Ty, TyCtxt};
 
 /// The shorthand encoding uses an enum's variant index `usize`
@@ -480,6 +481,15 @@ impl<'tcx, D: TyDecoder<'tcx>> RefDecodable<'tcx, D> for ty::List<FieldIdx> {
     }
 }
 
+impl<'tcx, D: TyDecoder<'tcx>> RefDecodable<'tcx, D> for ty::List<FieldPathSegment> {
+    fn decode(decoder: &mut D) -> &'tcx Self {
+        let len = decoder.read_usize();
+        decoder.interner().mk_field_path_from_iter(
+            (0..len).map::<FieldPathSegment, _>(|_| Decodable::decode(decoder)),
+        )
+    }
+}
+
 impl<'tcx, D: TyDecoder<'tcx>> RefDecodable<'tcx, D> for ty::List<LocalDefId> {
     fn decode(decoder: &mut D) -> &'tcx Self {
         let len = decoder.read_usize();
@@ -513,6 +523,7 @@ impl_decodable_via_ref! {
     &'tcx ty::List<ty::BoundVariableKind>,
     &'tcx ty::List<ty::Pattern<'tcx>>,
     &'tcx ty::ListWithCachedTypeInfo<ty::Clause<'tcx>>,
+    &'tcx ty::List<FieldPathSegment>,
 }
 
 #[macro_export]
