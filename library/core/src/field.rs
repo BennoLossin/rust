@@ -50,3 +50,10 @@ pub unsafe trait PinnableField: UnalignedField {
     /// The supplied reference must be derived from a `Pin<&mut Self::Base>`.
     unsafe fn from_pinned_ref(r: &mut Self::Type) -> Self::Projected<&mut Self::Type>;
 }
+
+/// TODO
+#[unstable(feature = "field_projections", issue = "145383")]
+pub macro offset_of($Container:ty, $($fields:expr)+ $(,)?) {
+    // The `{}` is for better error messages
+    {builtin # field_of($Container, $($fields)+)}
+}
