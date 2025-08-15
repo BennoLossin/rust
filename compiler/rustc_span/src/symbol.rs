@@ -1027,6 +1027,7 @@ symbols! {
         ffi_returns_twice,
         field,
         field_init_shorthand,
+        field_projections,
         file,
         file_options,
         flags,
