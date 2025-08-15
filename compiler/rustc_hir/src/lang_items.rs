@@ -437,6 +437,11 @@ language_item_table! {
     DefaultTrait1,           sym::default_trait1,      default_trait1_trait,       Target::Trait,          GenericRequirement::None;
 
     ContractCheckEnsures,     sym::contract_check_ensures,      contract_check_ensures_fn,      Target::Fn, GenericRequirement::None;
+
+    // Experimental lang items for field projections.
+    Field,                   sym::Field,               field_trait,                Target::Trait,          GenericRequirement::None;
+    UnalignedField,          sym::UnalignedField,      unaligned_field_trait,      Target::Trait,          GenericRequirement::None;
+    PinnableField,           sym::PinnableField,       pinnable_field_trait,       Target::Trait,          GenericRequirement::None;
 }
 
 /// The requirement imposed on the generics of a lang item
