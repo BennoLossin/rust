@@ -1580,6 +1580,8 @@ pub enum NullOp<'tcx> {
     AlignOf,
     /// Returns the offset of a field
     OffsetOf(&'tcx List<(VariantIdx, FieldIdx)>),
+    /// Returns the field representing type
+    FieldOf(&'tcx List<(VariantIdx, FieldIdx)>),
     /// Returns whether we should perform some UB-checking at runtime.
     /// See the `ub_checks` intrinsic docs for details.
     UbChecks,

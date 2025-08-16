@@ -23,6 +23,7 @@ mod lint;
 use std::assert_matches::assert_matches;
 use std::slice;
 
+use rustc_abi::FieldIdx;
 use rustc_ast::TraitObjectSyntax;
 use rustc_data_structures::fx::{FxHashSet, FxIndexMap, FxIndexSet};
 use rustc_errors::codes::*;
@@ -39,8 +40,8 @@ use rustc_middle::middle::stability::AllowUnstable;
 use rustc_middle::mir::interpret::LitToConstInput;
 use rustc_middle::ty::print::PrintPolyTraitRefExt as _;
 use rustc_middle::ty::{
-    self, Const, GenericArgKind, GenericArgsRef, GenericParamDefKind, Ty, TyCtxt, TypeVisitableExt,
-    TypingMode, Upcast, fold_regions,
+    self, Const, GenericArgKind, GenericArgsRef, GenericParamDefKind, List, Ty, TyCtxt,
+    TypeVisitableExt, TypingMode, Upcast, fold_regions,
 };
 use rustc_middle::{bug, span_bug};
 use rustc_session::lint::builtin::AMBIGUOUS_ASSOCIATED_ITEMS;
@@ -2549,6 +2550,11 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
                 let length = self.lower_const_arg(length, FeedConstTy::No);
                 Ty::new_array_with_const_len(tcx, self.lower_ty(ty), length)
             }
+            hir::TyKind::FieldOf(container, fields) => {
+                let container = self.lower_ty(container);
+                let fields = self.lower_field_path(container, fields);
+                Ty::new_field_of(tcx, container, fields)
+            }
             hir::TyKind::Typeof(e) => tcx.type_of(e.def_id).instantiate_identity(),
             hir::TyKind::Infer(()) => {
                 // Infer also appears as the type of arguments or return
@@ -2827,5 +2833,30 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
             self.dcx().emit_err(AmbiguousLifetimeBound { span });
         }
         Some(r)
+    }
+
+    fn lower_field_path(&self, container: Ty<'tcx>, fields: &[Ident]) -> &'tcx List<FieldIdx> {
+        let mut cur = container;
+        let mut idxs = Vec::new();
+        'outer: for field in fields {
+            match cur.kind() {
+                ty::Adt(def, args) if def.is_struct() => {
+                    for (idx, field_def) in def.non_enum_variant().fields.iter_enumerated() {
+                        if field_def.name == field.name {
+                            idxs.push(idx);
+                            cur = field_def.ty(self.tcx(), args);
+                            continue 'outer;
+                        }
+                    }
+                    // TODO(field_projections): need to generate an error here that the field wasn't
+                    // resolved.
+                    todo!("field_projections");
+                }
+                // TODO(field_projections): need to generate an error here that one can't take a
+                // field of this type/ it's not supported yet (for `union`, `enum` & `tuple`)
+                _ => todo!("field_projections"),
+            }
+        }
+        self.tcx().mk_field_path(&idxs)
     }
 }

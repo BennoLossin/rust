@@ -378,6 +378,9 @@ impl HirEqInterExpr<'_, '_, '_> {
             (ExprKind::OffsetOf(l_container, l_fields), ExprKind::OffsetOf(r_container, r_fields)) => {
                 self.eq_ty(l_container, r_container) && over(l_fields, r_fields, |l, r| l.name == r.name)
             },
+            (ExprKind::FieldOf(l_container, l_fields), ExprKind::FieldOf(r_container, r_fields)) => {
+                self.eq_ty(l_container, r_container) && over(l_fields, r_fields, |l, r| l.name == r.name)
+            },
             (ExprKind::Path(l), ExprKind::Path(r)) => self.eq_qpath(l, r),
             (ExprKind::Repeat(le, ll), ExprKind::Repeat(re, rl)) => {
                 self.eq_expr(le, re) && self.eq_const_arg(ll, rl)
@@ -422,6 +425,7 @@ impl HirEqInterExpr<'_, '_, '_> {
                 | ExprKind::Match(..)
                 | ExprKind::MethodCall(..)
                 | ExprKind::OffsetOf(..)
+                | ExprKind::FieldOf(..)
                 | ExprKind::Path(..)
                 | ExprKind::Repeat(..)
                 | ExprKind::Ret(..)
@@ -1022,6 +1026,13 @@ impl<'a, 'tcx> SpanlessHash<'a, 'tcx> {
                 self.hash_exprs(args);
             },
             ExprKind::OffsetOf(container, fields) => {
+                self.hash_ty(container);
+                for field in *fields {
+                    self.hash_name(field.name);
+                }
+            },
+            ExprKind::FieldOf(container, fields) => {
+                // TODO(field_projections): need anything else to differentiate this from `OffsetOf`?
                 self.hash_ty(container);
                 for field in *fields {
                     self.hash_name(field.name);

@@ -720,6 +720,8 @@ impl<'tcx> Rvalue<'tcx> {
             Rvalue::NullaryOp(NullOp::SizeOf | NullOp::AlignOf | NullOp::OffsetOf(..), _) => {
                 tcx.types.usize
             }
+            // TODO(field_projections): should be type of types.
+            Rvalue::NullaryOp(NullOp::FieldOf(..), _) => todo!("field_projections"),
             Rvalue::NullaryOp(NullOp::ContractChecks, _)
             | Rvalue::NullaryOp(NullOp::UbChecks, _) => tcx.types.bool,
             Rvalue::Aggregate(ref ak, ref ops) => match **ak {
@@ -789,6 +791,8 @@ impl<'tcx> NullOp<'tcx> {
     pub fn ty(&self, tcx: TyCtxt<'tcx>) -> Ty<'tcx> {
         match self {
             NullOp::SizeOf | NullOp::AlignOf | NullOp::OffsetOf(_) => tcx.types.usize,
+            // TODO(field_projections): this should return the type of types?
+            NullOp::FieldOf(_) => todo!("field_projections"),
             NullOp::UbChecks | NullOp::ContractChecks => tcx.types.bool,
         }
     }

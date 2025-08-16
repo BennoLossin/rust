@@ -584,6 +584,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | ExprKind::StaticRef { .. }
             | ExprKind::InlineAsm { .. }
             | ExprKind::OffsetOf { .. }
+            | ExprKind::FieldOf { .. }
             | ExprKind::Yield { .. }
             | ExprKind::ThreadLocalRef(_)
             | ExprKind::Call { .. }

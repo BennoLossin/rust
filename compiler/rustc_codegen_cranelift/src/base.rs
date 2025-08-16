@@ -862,6 +862,7 @@ fn codegen_stmt<'tcx>(fx: &mut FunctionCx<'_, '_, 'tcx>, cur_block: Block, stmt:
                                 fields.iter(),
                             )
                             .bytes(),
+                        NullOp::FieldOf(_) => todo!("field_projections"),
                         NullOp::UbChecks => {
                             let val = fx.tcx.sess.ub_checks();
                             let val = CValue::by_val(

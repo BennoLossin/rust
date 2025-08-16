@@ -1341,6 +1341,7 @@ impl<'a, 'tcx> Visitor<'tcx> for TypeChecker<'a, 'tcx> {
                     }
                 }
             }
+            Rvalue::NullaryOp(NullOp::FieldOf(_), _) => todo!("field_projections"),
             Rvalue::NullaryOp(NullOp::OffsetOf(indices), container) => {
                 let fail_out_of_bounds = |this: &mut Self, location, field, ty| {
                     this.fail(location, format!("Out of bounds field {field:?} for {ty}"));

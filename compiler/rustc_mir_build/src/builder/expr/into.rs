@@ -794,6 +794,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | ExprKind::ThreadLocalRef(_)
             | ExprKind::StaticRef { .. }
             | ExprKind::OffsetOf { .. }
+            | ExprKind::FieldOf { .. }
             | ExprKind::WrapUnsafeBinder { .. } => {
                 debug_assert!(match Category::of(&expr.kind).unwrap() {
                     // should be handled above

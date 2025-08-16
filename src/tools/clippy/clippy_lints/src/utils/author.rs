@@ -665,6 +665,10 @@ impl<'a, 'tcx> PrintVisitor<'a, 'tcx> {
                 bind!(self, container, fields);
                 kind!("OffsetOf({container}, {fields})");
             },
+            ExprKind::FieldOf(container, ref fields) => {
+                bind!(self, container, fields);
+                kind!("FieldOf({container}, {fields})");
+            },
             ExprKind::Struct(qpath, fields, base) => {
                 bind!(self, qpath, fields);
                 let base = OptionPat::new(match base {

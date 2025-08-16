@@ -565,6 +565,11 @@ pub enum ExprKind<'tcx> {
         container: Ty<'tcx>,
         fields: &'tcx List<(VariantIdx, FieldIdx)>,
     },
+    /// Field representing type (`field_of!`)
+    FieldOf {
+        container: Ty<'tcx>,
+        fields: &'tcx List<(VariantIdx, FieldIdx)>,
+    },
     /// An expression taking a reference to a thread local.
     ThreadLocalRef(DefId),
     /// A `yield` expression.

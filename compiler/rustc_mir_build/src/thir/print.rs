@@ -588,6 +588,19 @@ impl<'a, 'tcx> ThirPrinter<'a, 'tcx> {
                 print_indented!(self, "]", depth_lvl + 1);
                 print_indented!(self, "}", depth_lvl);
             }
+            FieldOf { container, fields } => {
+                print_indented!(self, "FieldOf {", depth_lvl);
+                print_indented!(self, format!("container: {:?}", container), depth_lvl + 1);
+                print_indented!(self, "fields: [", depth_lvl + 1);
+
+                for field in fields.iter() {
+                    print_indented!(self, format!("{:?}", field), depth_lvl + 2);
+                    print_indented!(self, ",", depth_lvl + 1);
+                }
+
+                print_indented!(self, "]", depth_lvl + 1);
+                print_indented!(self, "}", depth_lvl);
+            }
             ThreadLocalRef(def_id) => {
                 print_indented!(self, "ThreadLocalRef {", depth_lvl);
                 print_indented!(self, format!("def_id: {:?}", def_id), depth_lvl + 1);

@@ -629,6 +629,8 @@ impl<'a, 'tcx, Bx: BuilderMethods<'a, 'tcx>> FunctionCx<'a, 'tcx, Bx> {
                             .bytes();
                         bx.cx().const_usize(val)
                     }
+                    // TODO(field_projections): I'm not so sure, should this even be a mir thing???
+                    mir::NullOp::FieldOf(..) => todo!("field_projections"),
                     mir::NullOp::UbChecks => {
                         let val = bx.tcx().sess.ub_checks();
                         bx.cx().const_bool(val)

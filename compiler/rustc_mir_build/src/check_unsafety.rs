@@ -477,6 +477,7 @@ impl<'a, 'tcx> Visitor<'a, 'tcx> for UnsafetyVisitor<'a, 'tcx> {
             | ExprKind::If { .. }
             | ExprKind::InlineAsm { .. }
             | ExprKind::OffsetOf { .. }
+            | ExprKind::FieldOf { .. }
             | ExprKind::LogicalOp { .. }
             | ExprKind::Use { .. } => {
                 // We don't need to save the old value and restore it

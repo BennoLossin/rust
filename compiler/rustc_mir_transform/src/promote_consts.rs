@@ -456,6 +456,7 @@ impl<'tcx> Validator<'_, 'tcx> {
                 NullOp::SizeOf => {}
                 NullOp::AlignOf => {}
                 NullOp::OffsetOf(_) => {}
+                NullOp::FieldOf(_) => {}
                 NullOp::UbChecks => {}
                 NullOp::ContractChecks => {}
             },

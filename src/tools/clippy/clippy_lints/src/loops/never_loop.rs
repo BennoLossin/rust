@@ -347,6 +347,7 @@ fn never_loop_expr<'tcx>(
             InlineAsmOperand::Label { block } => never_loop_block(cx, block, local_labels, main_loop_id),
         })),
         ExprKind::OffsetOf(_, _)
+        | ExprKind::FieldOf(_, _)
         | ExprKind::Yield(_, _)
         | ExprKind::Closure { .. }
         | ExprKind::Path(_)

@@ -629,6 +629,7 @@ impl<'mir, 'tcx> ConstPropagator<'mir, 'tcx> {
                         .tcx
                         .offset_of_subfield(self.typing_env, op_layout, fields.iter())
                         .bytes(),
+                    NullOp::FieldOf(_) => todo!("field_projections"),
                     NullOp::UbChecks => return None,
                     NullOp::ContractChecks => return None,
                 };

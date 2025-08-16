@@ -423,6 +423,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.and(Rvalue::NullaryOp(NullOp::OffsetOf(fields), container))
             }
 
+            ExprKind::FieldOf { container, fields } => {
+                block.and(Rvalue::NullaryOp(NullOp::FieldOf(fields), container))
+            }
+
             ExprKind::Literal { .. }
             | ExprKind::NamedConst { .. }
             | ExprKind::NonHirLiteral { .. }

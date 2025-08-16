@@ -332,6 +332,9 @@ impl<'tcx> Stable<'tcx> for mir::NullOp<'tcx> {
             OffsetOf(indices) => crate::mir::NullOp::OffsetOf(
                 indices.iter().map(|idx| idx.stable(tables, cx)).collect(),
             ),
+            FieldOf(indices) => crate::mir::NullOp::OffsetOf(
+                indices.iter().map(|idx| idx.stable(tables, cx)).collect(),
+            ),
             UbChecks => crate::mir::NullOp::UbChecks,
             ContractChecks => crate::mir::NullOp::ContractChecks,
         }

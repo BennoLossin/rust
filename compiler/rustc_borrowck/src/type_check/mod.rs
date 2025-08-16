@@ -1632,7 +1632,7 @@ impl<'a, 'tcx> Visitor<'tcx> for TypeChecker<'a, 'tcx> {
             | Rvalue::ThreadLocalRef(..)
             | Rvalue::Len(..)
             | Rvalue::Discriminant(..)
-            | Rvalue::NullaryOp(NullOp::OffsetOf(..), _) => {}
+            | Rvalue::NullaryOp(NullOp::OffsetOf(..) | NullOp::FieldOf(..), _) => {}
         }
     }
 

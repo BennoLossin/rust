@@ -667,6 +667,14 @@ impl<'tcx> Ty<'tcx> {
         Ty::new(tcx, Adt(def, args))
     }
 
+    pub fn new_field_of(
+        tcx: TyCtxt<'tcx>,
+        container: Ty<'tcx>,
+        fields: &'tcx List<FieldIdx>,
+    ) -> Ty<'tcx> {
+        Ty::new(tcx, Field(container, fields))
+    }
+
     #[inline]
     pub fn new_foreign(tcx: TyCtxt<'tcx>, def_id: DefId) -> Ty<'tcx> {
         Ty::new(tcx, Foreign(def_id))
