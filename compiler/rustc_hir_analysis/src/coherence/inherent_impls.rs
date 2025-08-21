@@ -123,6 +123,7 @@ impl<'tcx> InherentCollect<'tcx> {
 
     fn check_field_type(
         &mut self,
+        id: LocalDefId,
         container: Ty<'tcx>,
         field_path: &'tcx ty::List<FieldPathSegment>,
     ) -> Result<(), ErrorGuaranteed> {
@@ -155,6 +156,8 @@ impl<'tcx> InherentCollect<'tcx> {
                 todo!("field_projections");
             }
         }
+        self.impls_map.incoherent_impls.entry(SimplifiedType::Field).or_default().push(id);
+
         field_path.visit(container, Visitor, self.tcx)
     }
 
@@ -212,7 +215,7 @@ impl<'tcx> InherentCollect<'tcx> {
         }
         match *self_ty.kind() {
             ty::Adt(def, _) => self.check_def_id(id, self_ty, def.did()),
-            ty::Field(container, field_path) => self.check_field_type(container, field_path),
+            ty::Field(container, field_path) => self.check_field_type(id, container, field_path),
             ty::Foreign(did) => self.check_def_id(id, self_ty, did),
             ty::Dynamic(data, ..) if data.principal_def_id().is_some() => {
                 self.check_def_id(id, self_ty, data.principal_def_id().unwrap())
