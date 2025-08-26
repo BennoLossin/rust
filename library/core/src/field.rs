@@ -10,12 +10,15 @@
 #[unstable(feature = "field_projections", issue = "145383")]
 pub unsafe trait UnalignedField: Sized {
     /// The type of the base where this field exists in.
+    #[lang = "UnalignedFieldBase"]
     type Base: ?Sized;
 
     /// The type of the field.
+    #[lang = "UnalignedFieldType"]
     type Type: ?Sized;
 
     /// The offset of the field in bytes.
+    #[lang = "UnalignedFieldOFFSET"]
     const OFFSET: usize;
 }
 
@@ -41,6 +44,7 @@ pub unsafe trait PinnableField: UnalignedField {
     /// The pin-projection of this field.
     ///
     /// If this field is structurally pinned, this is `Pin<P>` otherwise it is `P`.
+    #[lang = "PinnableFieldProjected"]
     type Projected<P>;
 
     /// Sets the correct value for a pin projection.
@@ -48,6 +52,7 @@ pub unsafe trait PinnableField: UnalignedField {
     /// # Safety
     ///
     /// The supplied reference must be derived from a `Pin<&mut Self::Base>`.
+    #[lang = "PinnableFieldfrom_pinned_ref"]
     unsafe fn from_pinned_ref(r: &mut Self::Type) -> Self::Projected<&mut Self::Type>;
 }
 

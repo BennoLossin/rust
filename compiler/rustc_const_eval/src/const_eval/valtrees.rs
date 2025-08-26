@@ -161,9 +161,8 @@ fn const_to_valtree_inner<'tcx>(
             branches(ecx, place, def.variant(variant).fields.len(), def.is_enum().then_some(variant), num_nodes)
         }
 
-        ty::Field(..) => todo!("field_projections"),
-
-        ty::Never
+        ty::Field(..)
+        | ty::Never
         | ty::Error(_)
         | ty::Foreign(..)
         | ty::Infer(ty::FreshIntTy(_))
@@ -326,9 +325,8 @@ pub fn valtree_to_const_value<'tcx>(
             op_to_const(&ecx, &place.into(), /* for diagnostics */ false)
         }
 
-        ty::Field(..) => todo!("field_projections"),
-
-        ty::Never
+        ty::Field(..)
+        | ty::Never
         | ty::Error(_)
         | ty::Foreign(..)
         | ty::Infer(ty::FreshIntTy(_))

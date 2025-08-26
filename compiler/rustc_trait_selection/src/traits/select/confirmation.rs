@@ -282,7 +282,10 @@ impl<'cx, 'tcx> SelectionContext<'cx, 'tcx> {
                 | LangItem::FnPtrTrait
                 | LangItem::PointeeTrait
                 | LangItem::Tuple
-                | LangItem::Unpin,
+                | LangItem::Unpin
+                | LangItem::Field
+                | LangItem::UnalignedField
+                | LangItem::PinnableField,
             ) => ty::Binder::dummy(vec![]),
             other => bug!("unexpected builtin trait {trait_def:?} ({other:?})"),
         };

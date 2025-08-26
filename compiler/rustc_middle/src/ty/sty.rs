@@ -671,7 +671,7 @@ impl<'tcx> Ty<'tcx> {
         Ty::new(tcx, Adt(def, args))
     }
 
-    pub fn new_field_of(
+    pub fn new_field_type(
         tcx: TyCtxt<'tcx>,
         container: Ty<'tcx>,
         fields: &'tcx List<FieldPathSegment>,
@@ -982,6 +982,14 @@ impl<'tcx> rustc_type_ir::inherent::Ty<TyCtxt<'tcx>> for Ty<'tcx> {
         args: ty::GenericArgsRef<'tcx>,
     ) -> Self {
         Ty::new_adt(interner, adt_def, args)
+    }
+
+    fn new_field_type(
+        interner: TyCtxt<'tcx>,
+        container: <TyCtxt<'tcx> as rustc_type_ir::Interner>::Ty,
+        field_path: <TyCtxt<'tcx> as rustc_type_ir::Interner>::FieldPath,
+    ) -> Self {
+        Ty::new_field_type(interner, container, field_path)
     }
 
     fn new_foreign(interner: TyCtxt<'tcx>, def_id: DefId) -> Self {

@@ -75,6 +75,8 @@ pub trait Ty<I: Interner<Ty = Self>>:
 
     fn new_adt(interner: I, adt_def: I::AdtDef, args: I::GenericArgs) -> Self;
 
+    fn new_field_type(interner: I, contanier: I::Ty, field_path: I::FieldPath) -> Self;
+
     fn new_foreign(interner: I, def_id: I::DefId) -> Self;
 
     fn new_dynamic(

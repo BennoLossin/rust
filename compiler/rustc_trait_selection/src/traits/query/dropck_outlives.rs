@@ -399,8 +399,8 @@ pub fn dtorck_constraint_for_ty_inner<'tcx>(
                 .extend(overflows.iter().map(|t| EarlyBinder::bind(*t).instantiate(tcx, args)));
         }
 
-        // TODO(field_projections): ...
-        ty::Field(..) => todo!("field_projections"),
+        // TODO(field_projections): currently no `Drop` impl, later need to either deny or allow it.
+        ty::Field(..) => {}
 
         // Objects must be alive in order for their destructor
         // to be called.

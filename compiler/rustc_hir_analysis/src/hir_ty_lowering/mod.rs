@@ -2554,7 +2554,7 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
                 let fields = self.tcx().mk_field_path_from_iter(
                     fields.iter().map(|field| FieldPathSegment(field.name)),
                 );
-                Ty::new_field_of(tcx, container, fields)
+                Ty::new_field_type(tcx, container, fields)
             }
             hir::TyKind::Typeof(e) => tcx.type_of(e.def_id).instantiate_identity(),
             hir::TyKind::Infer(()) => {

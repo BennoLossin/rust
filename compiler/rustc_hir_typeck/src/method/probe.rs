@@ -802,11 +802,10 @@ impl<'a, 'tcx> ProbeContext<'a, 'tcx> {
             | ty::RawPtr(_, _)
             | ty::Ref(..)
             | ty::Never
+            | ty::Field(..)
             | ty::Tuple(..) => {
                 self.assemble_inherent_candidates_for_incoherent_ty(raw_self_ty, receiver_steps)
             }
-
-            ty::Field(..) => todo!("field_projections"),
 
             ty::Alias(..)
             | ty::Bound(..)

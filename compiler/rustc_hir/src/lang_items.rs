@@ -442,9 +442,14 @@ language_item_table! {
     Reborrow,                sym::reborrow,            reborrow,                   Target::Trait,          GenericRequirement::Exact(0);
 
     // Experimental lang items for field projections.
-    Field,                   sym::Field,               field_trait,                Target::Trait,          GenericRequirement::None;
-    UnalignedField,          sym::UnalignedField,      unaligned_field_trait,      Target::Trait,          GenericRequirement::None;
-    PinnableField,           sym::PinnableField,       pinnable_field_trait,       Target::Trait,          GenericRequirement::None;
+    Field,                          sym::Field,                         field_trait,                      Target::Trait,                                        GenericRequirement::None;
+    UnalignedField,                 sym::UnalignedField,                unaligned_field_trait,            Target::Trait,                                        GenericRequirement::None;
+    UnalignedFieldBase,             sym::UnalignedFieldBase,            unaligned_field_base,             Target::AssocTy,                                      GenericRequirement::None;
+    UnalignedFieldType,             sym::UnalignedFieldType,            unaligned_field_type,             Target::AssocTy,                                      GenericRequirement::None;
+    UnalignedFieldOFFSET,           sym::UnalignedFieldOFFSET,          unaligned_field_offset,           Target::AssocConst,                                   GenericRequirement::None;
+    PinnableField,                  sym::PinnableField,                 pinnable_field_trait,             Target::Trait,                                        GenericRequirement::None;
+    PinnableFieldProjected,         sym::PinnableFieldProjected,        pinnable_field_projected,         Target::AssocTy,                                      GenericRequirement::None;
+    PinnableFieldfromPinnedRef,     sym::PinnableFieldfrom_pinned_ref,  pinnable_field_from_pinned_ref,   Target::Method(MethodKind::Trait { body: false }),    GenericRequirement::None;
 }
 
 /// The requirement imposed on the generics of a lang item

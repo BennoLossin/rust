@@ -1,7 +1,8 @@
-use rustc_abi::BackendRepr;
-use rustc_middle::mir::interpret::ErrorHandled;
+use rustc_abi::{BackendRepr, Size};
+use rustc_hir::LangItem;
+use rustc_middle::mir::interpret::{ErrorHandled, Scalar};
 use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
-use rustc_middle::ty::{self, Ty};
+use rustc_middle::ty::{self, ScalarInt, Ty};
 use rustc_middle::{bug, mir, span_bug};
 
 use super::FunctionCx;
@@ -23,7 +24,15 @@ impl<'a, 'tcx, Bx: BuilderMethods<'a, 'tcx>> FunctionCx<'a, 'tcx, Bx> {
     pub fn eval_mir_constant(&self, constant: &mir::ConstOperand<'tcx>) -> mir::ConstValue {
         // `MirUsedCollector` visited all required_consts before codegen began, so if we got here
         // there can be no more constants that fail to evaluate.
-        self.monomorphize(constant.const_)
+        let const_ = self.monomorphize(constant.const_);
+        if let mir::Const::Unevaluated(unev, _) = const_
+            && self.cx.tcx().is_lang_item(unev.def, LangItem::UnalignedFieldOFFSET)
+        {
+            // TODO(field_projections): FIXME!!!
+            return mir::ConstValue::Scalar(Scalar::Int(ScalarInt::null(Size::from_bits(64))));
+        }
+
+        const_
             .eval(self.cx.tcx(), self.cx.typing_env(), constant.span)
             .expect("erroneous constant missed by mono item collection")
     }

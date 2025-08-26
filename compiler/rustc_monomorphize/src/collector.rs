@@ -209,6 +209,7 @@ mod autodiff;
 
 use std::cell::OnceCell;
 
+use rustc_abi::Size;
 use rustc_data_structures::fx::FxIndexMap;
 use rustc_data_structures::sync::{MTLock, par_for_each_in};
 use rustc_data_structures::unord::{UnordMap, UnordSet};
@@ -226,8 +227,8 @@ use rustc_middle::query::TyCtxtAt;
 use rustc_middle::ty::adjustment::{CustomCoerceUnsized, PointerCoercion};
 use rustc_middle::ty::layout::ValidityRequirement;
 use rustc_middle::ty::{
-    self, GenericArgs, GenericParamDefKind, Instance, InstanceKind, Ty, TyCtxt, TypeFoldable,
-    TypeVisitableExt, VtblEntry,
+    self, GenericArgs, GenericParamDefKind, Instance, InstanceKind, ScalarInt, Ty, TyCtxt,
+    TypeFoldable, TypeVisitableExt, VtblEntry,
 };
 use rustc_middle::util::Providers;
 use rustc_middle::{bug, span_bug};
@@ -662,6 +663,14 @@ impl<'a, 'tcx> MirUsedCollector<'a, 'tcx> {
     /// Evaluates a *not yet monomorphized* constant.
     fn eval_constant(&mut self, constant: &mir::ConstOperand<'tcx>) -> Option<mir::ConstValue> {
         let const_ = self.monomorphize(constant.const_);
+        if let mir::Const::Unevaluated(unev, _) = const_
+            && self.tcx.is_lang_item(unev.def, LangItem::UnalignedFieldOFFSET)
+        {
+            // TODO(field_projections): FIXME!!!
+            return Some(mir::ConstValue::Scalar(Scalar::Int(ScalarInt::null(Size::from_bits(
+                64,
+            )))));
+        }
         // Evaluate the constant. This makes const eval failure a collection-time error (rather than
         // a codegen-time error). rustc stops after collection if there was an error, so this
         // ensures codegen never has to worry about failing consts.
