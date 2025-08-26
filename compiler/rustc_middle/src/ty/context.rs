@@ -767,6 +767,7 @@ bidirectional_lang_item_map! {
     DiscriminantKind,
     Drop,
     DynMetadata,
+    Field,
     Fn,
     FnMut,
     FnOnce,
@@ -784,6 +785,7 @@ bidirectional_lang_item_map! {
     Sized,
     TransmuteTrait,
     Tuple,
+    UnalignedField,
     Unpin,
     Unsize,
 // tidy-alphabetical-end

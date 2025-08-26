@@ -21,6 +21,7 @@ pub enum TraitSolverLangItem {
     DiscriminantKind,
     Drop,
     DynMetadata,
+    Field,
     Fn,
     FnMut,
     FnOnce,
@@ -38,6 +39,7 @@ pub enum TraitSolverLangItem {
     Sized,
     TransmuteTrait,
     Tuple,
+    UnalignedField,
     Unpin,
     Unsize,
     // tidy-alphabetical-end
