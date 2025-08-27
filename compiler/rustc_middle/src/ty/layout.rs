@@ -805,17 +805,13 @@ where
                 | ty::Float(_)
                 | ty::FnPtr(..)
                 | ty::Never
+                | ty::Field(..)
                 | ty::FnDef(..)
                 | ty::CoroutineWitness(..)
                 | ty::Foreign(..)
                 | ty::Pat(_, _)
                 | ty::Dynamic(_, _, ty::Dyn) => {
                     bug!("TyAndLayout::field({:?}): not applicable", this)
-                }
-
-                ty::Field(_, _) => {
-                    // TODO(field_projections): no idea about this, is this just a `bug!`?
-                    todo!("field_projections")
                 }
 
                 ty::UnsafeBinder(bound_ty) => {

@@ -50,8 +50,6 @@ impl<'tcx> Printer<'tcx> for TypeNamePrinter<'tcx> {
                 Ok(())
             }
 
-            ty::Field(..) => todo!("field_projections"),
-
             // Types with identity (print the module path).
             ty::Adt(ty::AdtDef(Interned(&ty::AdtDefData { did: def_id, .. }, _)), args)
             | ty::FnDef(def_id, args)
@@ -60,6 +58,13 @@ impl<'tcx> Printer<'tcx> for TypeNamePrinter<'tcx> {
             | ty::CoroutineClosure(def_id, args)
             | ty::Coroutine(def_id, args) => self.print_def_path(def_id, args),
             ty::Foreign(def_id) => self.print_def_path(def_id, &[]),
+            ty::Field(container, field_path) => {
+                self.print_type(container)?;
+                for field in field_path {
+                    write!(self, ".{}", field.0)?;
+                }
+                Ok(())
+            }
 
             ty::Alias(ty::Free, _) => bug!("type_name: unexpected free alias"),
             ty::Alias(ty::Inherent, _) => bug!("type_name: unexpected inherent projection"),
