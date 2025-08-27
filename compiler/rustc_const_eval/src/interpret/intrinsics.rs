@@ -638,6 +638,8 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                 rustc_apfloat::Round::NearestTiesToEven,
             )?,
 
+            sym::unaligned_field_offset => todo!("field_projections"),
+
             // Unsupported intrinsic: skip the return_to_block below.
             _ => return interp_ok(false),
         }
