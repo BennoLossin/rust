@@ -1,12 +1,13 @@
-#![allow(incomplete_features, dead_code)]
+#![allow(incomplete_features)]
 #![feature(field_projections)]
 
 use std::field::{Field, UnalignedField, field_of};
 use std::mem::offset_of;
 use std::ptr;
 
-struct Foo {
-    x: usize,
+pub struct Foo {
+    pub x: usize,
+    pub y: usize,
 }
 
 pub fn project_ref<F: Field>(r: &F::Base) -> &F::Type
@@ -16,7 +17,14 @@ where
     unsafe { &*ptr::from_ref(r).byte_add(F::OFFSET).cast() }
 }
 
-fn main() {
-    let x = Foo { x: 42 };
-    let _: &usize = project_ref::<field_of!(Foo, x)>(&x);
+#[test]
+fn foo() {
+    let foo = Foo { x: 42, y: 24 };
+    let x = project_ref::<field_of!(Foo, x)>(&foo);
+    let y = project_ref::<field_of!(Foo, y)>(&foo);
+    assert_eq!(*x, 42);
+    assert_eq!(*y, 24);
+    assert_eq!(<field_of!(Foo, x)>::OFFSET, offset_of!(Foo, x));
 }
+
+fn main() {}
