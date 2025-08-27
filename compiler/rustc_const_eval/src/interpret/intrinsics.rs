@@ -3,13 +3,14 @@
 //! and miri.
 
 use std::assert_matches::assert_matches;
+use std::ops::ControlFlow;
 
-use rustc_abi::{FieldIdx, HasDataLayout, Size};
+use rustc_abi::{FieldIdx, HasDataLayout, Size, VariantIdx};
 use rustc_apfloat::ieee::{Double, Half, Quad, Single};
 use rustc_middle::mir::interpret::{CTFE_ALLOC_SALT, read_target_uint, write_target_uint};
-use rustc_middle::mir::{self, BinOp, ConstValue, NonDivergingIntrinsic};
+use rustc_middle::mir::{self, BinOp, ConstValue, NonDivergingIntrinsic, NullOp};
 use rustc_middle::ty::layout::TyAndLayout;
-use rustc_middle::ty::{Ty, TyCtxt};
+use rustc_middle::ty::{FieldPath, FieldPathVisitor, Ty, TyCtxt};
 use rustc_middle::{bug, ty};
 use rustc_span::{Symbol, sym};
 use tracing::trace;
@@ -638,7 +639,7 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                 rustc_apfloat::Round::NearestTiesToEven,
             )?,
 
-            sym::unaligned_field_offset => todo!("field_projections"),
+            sym::unaligned_field_offset => self.unaligned_field_offset(instance, dest)?,
 
             // Unsupported intrinsic: skip the return_to_block below.
             _ => return interp_ok(false),
@@ -647,6 +648,68 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
         trace!("{:?}", self.dump_place(&dest.clone().into()));
         self.return_to_block(ret)?;
         interp_ok(true)
+    }
+
+    fn unaligned_field_offset(
+        &mut self,
+        instance: ty::Instance<'tcx>,
+        dest: &PlaceTy<'tcx, M::Provenance>,
+    ) -> InterpResult<'tcx, ()> {
+        assert_eq!(instance.args.len(), 1);
+        match instance.args.type_at(0).kind() {
+            &ty::Field(container, field_path) => {
+                struct Visitor {
+                    list: Vec<(VariantIdx, FieldIdx)>,
+                }
+                impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor {
+                    type Output = Vec<(VariantIdx, FieldIdx)>;
+
+                    fn visit_segment(
+                        &mut self,
+                        base: Ty<'tcx>,
+                        name: Symbol,
+                        _field_ty: Ty<'tcx>,
+                    ) -> ControlFlow<Self::Output> {
+                        match base.kind() {
+                            ty::Adt(def, _) if def.is_struct() => {
+                                for (field_idx, field_def) in
+                                    def.non_enum_variant().fields.iter_enumerated()
+                                {
+                                    if field_def.name == name {
+                                        self.list.push((VariantIdx::ZERO, field_idx));
+                                        return ControlFlow::Continue(());
+                                    }
+                                }
+                            }
+                            _ => todo!("field_projections"),
+                        }
+                        bug!("should have found a field with the name")
+                    }
+
+                    fn visit_final(&mut self, _field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
+                        std::mem::take(&mut self.list)
+                    }
+
+                    fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
+                        todo!()
+                    }
+
+                    fn unknown_field(
+                        &mut self,
+                        _ty: Ty<'tcx>,
+                        _unknown_field: Symbol,
+                    ) -> Self::Output {
+                        todo!()
+                    }
+                }
+                let offset_of_path =
+                    field_path.visit(container, Visitor { list: Vec::new() }, self.tcx.tcx);
+                let offset_of_path = self.tcx.mk_offset_of_from_iter(offset_of_path.into_iter());
+                let offset = self.nullary_op(NullOp::OffsetOf(offset_of_path), container)?;
+                self.write_immediate(*offset, dest)
+            }
+            _ => bug!("expected field representing type, found {}", instance.args.type_at(0)),
+        }
     }
 
     pub(super) fn eval_nondiverging_intrinsic(

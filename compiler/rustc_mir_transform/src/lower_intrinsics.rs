@@ -1,12 +1,9 @@
 //! Lowers intrinsic calls
 
-use std::ops::ControlFlow;
-
-use rustc_abi::{FieldIdx, VariantIdx};
 use rustc_middle::mir::*;
-use rustc_middle::ty::{self, FieldPath, FieldPathVisitor, Ty, TyCtxt};
+use rustc_middle::ty::{self, TyCtxt};
 use rustc_middle::{bug, span_bug};
-use rustc_span::{Symbol, sym};
+use rustc_span::sym;
 
 use crate::take_array;
 
@@ -377,75 +374,6 @@ impl<'tcx> crate::MirPass<'tcx> for LowerIntrinsics {
                         ));
                         terminator.kind = TerminatorKind::Goto { target };
                     }
-                    sym::unaligned_field_offset => match generic_args.type_at(0).kind() {
-                        &ty::Field(container, field_path) => {
-                            let target = target.unwrap();
-                            struct Visitor {
-                                list: Vec<(VariantIdx, FieldIdx)>,
-                            }
-                            impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor {
-                                type Output = Vec<(VariantIdx, FieldIdx)>;
-
-                                fn visit_segment(
-                                    &mut self,
-                                    base: Ty<'tcx>,
-                                    name: Symbol,
-                                    _field_ty: Ty<'tcx>,
-                                ) -> ControlFlow<Self::Output> {
-                                    match base.kind() {
-                                        ty::Adt(def, _) if def.is_struct() => {
-                                            for (field_idx, field_def) in
-                                                def.non_enum_variant().fields.iter_enumerated()
-                                            {
-                                                if field_def.name == name {
-                                                    self.list.push((VariantIdx::ZERO, field_idx));
-                                                    return ControlFlow::Continue(());
-                                                }
-                                            }
-                                        }
-                                        _ => todo!("field_projections"),
-                                    }
-                                    bug!("should have found a field with the name")
-                                }
-
-                                fn visit_final(
-                                    &mut self,
-                                    _field_ty: Ty<'tcx>,
-                                    _name: Symbol,
-                                ) -> Self::Output {
-                                    std::mem::take(&mut self.list)
-                                }
-
-                                fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
-                                    todo!()
-                                }
-
-                                fn unknown_field(
-                                    &mut self,
-                                    _ty: Ty<'tcx>,
-                                    _unknown_field: Symbol,
-                                ) -> Self::Output {
-                                    todo!()
-                                }
-                            }
-                            let offset_of_path =
-                                field_path.visit(container, Visitor { list: Vec::new() }, tcx);
-                            let offset_of_path =
-                                tcx.mk_offset_of_from_iter(offset_of_path.into_iter());
-                            block.statements.push(Statement::new(
-                                terminator.source_info,
-                                StatementKind::Assign(Box::new((
-                                    *destination,
-                                    Rvalue::NullaryOp(
-                                        NullOp::OffsetOf(offset_of_path),
-                                        tcx.types.usize,
-                                    ),
-                                ))),
-                            ));
-                            terminator.kind = TerminatorKind::Goto { target };
-                        }
-                        _ => {}
-                    },
                     _ => {}
                 }
             }

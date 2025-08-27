@@ -264,8 +264,8 @@ fn resolve_associated_item<'tcx>(
                         _ => bug!("expected field representing type, found {self_ty}"),
                     }
                     Some(Instance {
-                        def: ty::InstanceKind::Intrinsic(
-                            tcx.lang_items().get(LangItem::UnalignedFieldOffset).unwrap(),
+                        def: ty::InstanceKind::Item(
+                            tcx.lang_items().get(LangItem::UnalignedFieldOFFSET).unwrap(),
                         ),
                         args: rcvr_args,
                     })
