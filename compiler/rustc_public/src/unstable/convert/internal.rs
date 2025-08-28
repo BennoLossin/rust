@@ -15,7 +15,7 @@ use crate::mir::mono::{Instance, MonoItem, StaticDef};
 use crate::mir::{BinOp, Mutability, Place, ProjectionElem, RawPtrKind, Safety, UnOp};
 use crate::ty::{
     Abi, AdtDef, Binder, BoundRegionKind, BoundTyKind, BoundVariableKind, ClosureKind, DynKind,
-    ExistentialPredicate, ExistentialProjection, ExistentialTraitRef, FloatTy, FnSig,
+    ExistentialPredicate, ExistentialProjection, ExistentialTraitRef, FieldPath, FloatTy, FnSig,
     GenericArgKind, GenericArgs, IntTy, MirConst, Movability, Pattern, Region, RigidTy, Span,
     TermKind, TraitRef, Ty, TyConst, UintTy, VariantDef, VariantIdx,
 };
@@ -79,6 +79,21 @@ impl RustcInternal for GenericArgKind {
             GenericArgKind::Const(cnst) => cnst.internal(tables, tcx).into(),
         };
         tcx.lift(arg).unwrap()
+    }
+}
+
+impl RustcInternal for FieldPath {
+    type T<'tcx> = &'tcx rustc_ty::List<rustc_ty::FieldPathSegment>;
+    fn internal<'tcx>(
+        &self,
+        _tables: &mut Tables<'_, BridgeTys>,
+        tcx: impl InternalCx<'tcx>,
+    ) -> Self::T<'tcx> {
+        tcx.tcx().mk_field_path_from_iter(
+            self.0
+                .iter()
+                .map(|symbol| rustc_ty::FieldPathSegment(rustc_span::Symbol::intern(symbol))),
+        )
     }
 }
 
@@ -157,11 +172,8 @@ impl RustcInternal for RigidTy {
                 rustc_ty::TyKind::Adt(def.internal(tables, tcx), args.internal(tables, tcx))
             }
             #[allow(unreachable_code)]
-            RigidTy::Field(ty, _field_path) => {
-                rustc_ty::TyKind::Field(
-                    ty.internal(tables, tcx),
-                    todo!("field_projections"), // TODO(field_projections): probably `field_path.internal(tables, tcx)`
-                )
+            RigidTy::Field(ty, field_path) => {
+                rustc_ty::TyKind::Field(ty.internal(tables, tcx), field_path.internal(tables, tcx))
             }
             RigidTy::Str => rustc_ty::TyKind::Str,
             RigidTy::Slice(ty) => rustc_ty::TyKind::Slice(ty.internal(tables, tcx)),
