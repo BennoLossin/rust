@@ -58,12 +58,15 @@ impl<'tcx> Printer<'tcx> for TypeNamePrinter<'tcx> {
             | ty::CoroutineClosure(def_id, args)
             | ty::Coroutine(def_id, args) => self.print_def_path(def_id, args),
             ty::Foreign(def_id) => self.print_def_path(def_id, &[]),
-            ty::Field(container, field_path) => {
+            ty::Field(container, _field_path) => {
+                write!(self, "field_of!(")?;
                 self.print_type(container)?;
-                for field in field_path {
-                    write!(self, ".{}", field.0)?;
-                }
-                Ok(())
+                write!(self, ", ")?;
+                // for field in field_path {
+                //     write!(self, ".{}", field.0)?;
+                // }
+                write!(self, ")")?;
+                todo!("TODO(field_projections): pretty printing")
             }
 
             ty::Alias(ty::Free, _) => bug!("type_name: unexpected free alias"),

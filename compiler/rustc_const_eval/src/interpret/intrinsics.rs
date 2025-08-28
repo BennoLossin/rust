@@ -3,14 +3,13 @@
 //! and miri.
 
 use std::assert_matches::assert_matches;
-use std::ops::ControlFlow;
 
-use rustc_abi::{FieldIdx, HasDataLayout, Size, VariantIdx};
+use rustc_abi::{FieldIdx, HasDataLayout, Size};
 use rustc_apfloat::ieee::{Double, Half, Quad, Single};
 use rustc_middle::mir::interpret::{CTFE_ALLOC_SALT, read_target_uint, write_target_uint};
 use rustc_middle::mir::{self, BinOp, ConstValue, NonDivergingIntrinsic, NullOp};
 use rustc_middle::ty::layout::TyAndLayout;
-use rustc_middle::ty::{FieldPath, FieldPathVisitor, Ty, TyCtxt};
+use rustc_middle::ty::{Ty, TyCtxt};
 use rustc_middle::{bug, ty};
 use rustc_span::{Symbol, sym};
 use tracing::trace;
@@ -658,65 +657,8 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
         assert_eq!(instance.args.len(), 1);
         match instance.args.type_at(0).kind() {
             &ty::Field(container, field_path) => {
-                struct Visitor {
-                    list: Vec<(VariantIdx, FieldIdx)>,
-                }
-                impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor {
-                    type Output = Option<Vec<(VariantIdx, FieldIdx)>>;
-
-                    fn visit_segment(
-                        &mut self,
-                        base: Ty<'tcx>,
-                        name: Symbol,
-                        _field_ty: Ty<'tcx>,
-                    ) -> ControlFlow<Self::Output> {
-                        match base.kind() {
-                            ty::Adt(def, _) if def.is_struct() => {
-                                for (field_idx, field_def) in
-                                    def.non_enum_variant().fields.iter_enumerated()
-                                {
-                                    if field_def.name == name {
-                                        self.list.push((VariantIdx::ZERO, field_idx));
-                                        return ControlFlow::Continue(());
-                                    }
-                                }
-                            }
-                            _ => bug!("unsupported type for `field_of!`"),
-                        }
-                        bug!("should have found a field with the name")
-                    }
-
-                    fn visit_final(&mut self, _field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
-                        Some(std::mem::take(&mut self.list))
-                    }
-
-                    fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
-                        None
-                    }
-
-                    fn unknown_field(
-                        &mut self,
-                        _ty: Ty<'tcx>,
-                        _unknown_field: Symbol,
-                    ) -> Self::Output {
-                        None
-                    }
-                }
-                if let Some(offset_of_path) =
-                    field_path.visit(container, Visitor { list: Vec::new() }, self.tcx.tcx)
-                {
-                    let offset_of_path =
-                        self.tcx.mk_offset_of_from_iter(offset_of_path.into_iter());
-                    let offset = self.nullary_op(NullOp::OffsetOf(offset_of_path), container)?;
-                    self.write_immediate(*offset, dest)
-                } else {
-                    // We failed to find the correct field offset, since the actual field doesn't
-                    // seem to exist.
-                    self.write_immediate(
-                        *ImmTy::from_uint(0u64, self.layout_of(self.tcx.types.usize).unwrap()),
-                        dest,
-                    )
-                }
+                let offset = self.nullary_op(NullOp::OffsetOf(field_path), container)?;
+                self.write_immediate(*offset, dest)
             }
             _ => bug!("expected field representing type, found {}", instance.args.type_at(0)),
         }

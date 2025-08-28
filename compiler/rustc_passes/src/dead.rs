@@ -297,7 +297,7 @@ impl<'tcx> MarkSymbolVisitor<'tcx> {
 
         let mut current_ty = container;
 
-        for &(variant, field) in indices {
+        for (variant, field) in indices {
             match current_ty.kind() {
                 ty::Adt(def, args) => {
                     let field = &def.variant(variant).fields[field];

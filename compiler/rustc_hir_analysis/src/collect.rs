@@ -36,7 +36,8 @@ use rustc_infer::traits::{DynCompatibilityViolation, ObligationCause};
 use rustc_middle::query::Providers;
 use rustc_middle::ty::util::{Discr, IntTypeExt};
 use rustc_middle::ty::{
-    self, AdtKind, Const, IsSuggestable, Ty, TyCtxt, TypeVisitableExt, TypingMode, fold_regions,
+    self, AdtKind, Const, FieldPath, IsSuggestable, Ty, TyCtxt, TypeVisitableExt, TypingMode,
+    fold_regions,
 };
 use rustc_middle::{bug, span_bug};
 use rustc_span::{DUMMY_SP, Ident, Span, Symbol, kw, sym};
@@ -344,6 +345,16 @@ impl<'tcx> HirTyLowerer<'tcx> for ItemCtxt<'tcx> {
     fn ct_infer(&self, _: Option<&ty::GenericParamDef>, span: Span) -> Const<'tcx> {
         self.report_placeholder_type_error(vec![span], vec![]);
         ty::Const::new_error_with_message(self.tcx(), span, "bad placeholder constant")
+    }
+
+    fn lower_field_path(
+        &self,
+        _container: &rustc_hir::Ty<'tcx>,
+        _fields: &[Ident],
+        _span: Span,
+        _hir_id: HirId,
+    ) -> (Ty<'tcx>, FieldPath<'tcx>) {
+        todo!("TODO(field_projections): not enough context to do field path lowering?")
     }
 
     fn register_trait_ascription_bounds(

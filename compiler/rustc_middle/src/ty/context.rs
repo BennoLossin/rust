@@ -11,7 +11,7 @@ use std::env::VarError;
 use std::ffi::OsStr;
 use std::hash::{Hash, Hasher};
 use std::marker::{PhantomData, PointeeSized};
-use std::ops::{Bound, ControlFlow, Deref};
+use std::ops::{Bound, Deref};
 use std::sync::{Arc, OnceLock};
 use std::{fmt, iter, mem};
 
@@ -77,11 +77,10 @@ use crate::traits::solve::{
     ExternalConstraints, ExternalConstraintsData, PredefinedOpaques, PredefinedOpaquesData,
 };
 use crate::ty::predicate::ExistentialPredicateStableCmpExt as _;
-use crate::ty::sty::FieldPathSegment;
 use crate::ty::{
-    self, AdtDef, AdtDefData, AdtKind, Binder, Clause, Clauses, Const, GenericArg, GenericArgs,
-    GenericArgsRef, GenericParamDefKind, List, ListWithCachedTypeInfo, ParamConst, ParamTy,
-    Pattern, PatternKind, PolyExistentialPredicate, PolyFnSig, Predicate, PredicateKind,
+    self, AdtDef, AdtDefData, AdtKind, Binder, Clause, Clauses, Const, FieldPath, GenericArg,
+    GenericArgs, GenericArgsRef, GenericParamDefKind, List, ListWithCachedTypeInfo, ParamConst,
+    ParamTy, Pattern, PatternKind, PolyExistentialPredicate, PolyFnSig, Predicate, PredicateKind,
     PredicatePolarity, Region, RegionKind, ReprOptions, TraitObjectVisitor, Ty, TyKind, TyVid,
     ValTree, ValTreeKind, Visibility,
 };
@@ -149,7 +148,7 @@ impl<'tcx> Interner for TyCtxt<'tcx> {
     type PatList = &'tcx List<Pattern<'tcx>>;
     type Safety = hir::Safety;
     type Abi = ExternAbi;
-    type FieldPath = &'tcx List<FieldPathSegment>;
+    type FieldPath = FieldPath<'tcx>;
     type Const = ty::Const<'tcx>;
     type PlaceholderConst = ty::PlaceholderConst;
 
@@ -811,53 +810,6 @@ impl<'tcx> rustc_type_ir::inherent::Abi<TyCtxt<'tcx>> for ExternAbi {
     }
 }
 
-impl<'tcx> rustc_type_ir::inherent::FieldPath<TyCtxt<'tcx>> for &'tcx List<FieldPathSegment> {
-    fn visit<V: rustc_type_ir::inherent::FieldPathVisitor<TyCtxt<'tcx>>>(
-        self,
-        container: <TyCtxt<'tcx> as Interner>::Ty,
-        mut visitor: V,
-        tcx: TyCtxt<'tcx>,
-    ) -> V::Output {
-        // TODO(field_projections): add shallow ty resolving?
-        //
-        // let infcx_;
-        // let infcx = if let Some(infcx) = tcx.infcx() {
-        //     infcx
-        // } else {
-        //     assert!(!container.has_infer());
-        //     infcx_ = tcx.infer_ctxt().build(ty::TypingMode::non_body_analysis());
-        //     &infcx_
-        // };
-
-        let mut cur = container;
-        'outer: for field in self {
-            // cur = infcx.shallow_resolve(cur);
-            match cur.kind() {
-                ty::Adt(def, args) if def.is_struct() => {
-                    for field_def in def.non_enum_variant().fields.iter() {
-                        if field_def.name == field.0 {
-                            let field_ty = field_def.ty(tcx, args);
-                            match visitor.visit_segment(cur, field_def.name, field_ty) {
-                                ControlFlow::Continue(()) => {
-                                    cur = field_ty;
-                                    continue 'outer;
-                                }
-                                ControlFlow::Break(val) => return val,
-                            }
-                        }
-                    }
-                    return visitor.unknown_field(cur, field.0);
-                }
-                // Only ADTs are supported by `field_of!` at the moment.
-                _ => return visitor.unsupported_type(cur),
-            }
-        }
-        // cur = infcx.shallow_resolve(cur);
-        let Some(last) = self.last() else { bug!("field paths must have at least one segment") };
-        visitor.visit_final(cur, last.0)
-    }
-}
-
 impl<'tcx> rustc_type_ir::inherent::Safety<TyCtxt<'tcx>> for hir::Safety {
     fn safe() -> Self {
         hir::Safety::Safe
@@ -927,10 +879,9 @@ pub struct CtxtInterners<'tcx> {
     external_constraints: InternedSet<'tcx, ExternalConstraintsData<TyCtxt<'tcx>>>,
     predefined_opaques_in_body: InternedSet<'tcx, PredefinedOpaquesData<TyCtxt<'tcx>>>,
     fields: InternedSet<'tcx, List<FieldIdx>>,
-    field_paths: InternedSet<'tcx, List<FieldPathSegment>>,
     local_def_ids: InternedSet<'tcx, List<LocalDefId>>,
     captures: InternedSet<'tcx, List<&'tcx ty::CapturedPlace<'tcx>>>,
-    offset_of: InternedSet<'tcx, List<(VariantIdx, FieldIdx)>>,
+    field_paths: InternedSet<'tcx, List<(VariantIdx, FieldIdx)>>,
     valtree: InternedSet<'tcx, ty::ValTreeKind<'tcx>>,
     patterns: InternedSet<'tcx, List<ty::Pattern<'tcx>>>,
     outlives: InternedSet<'tcx, List<ty::ArgOutlivesPredicate<'tcx>>>,
@@ -966,10 +917,9 @@ impl<'tcx> CtxtInterners<'tcx> {
             external_constraints: InternedSet::with_capacity(N),
             predefined_opaques_in_body: InternedSet::with_capacity(N),
             fields: InternedSet::with_capacity(N * 4),
-            field_paths: InternedSet::with_capacity(N * 4),
             local_def_ids: InternedSet::with_capacity(N),
             captures: InternedSet::with_capacity(N),
-            offset_of: InternedSet::with_capacity(N),
+            field_paths: InternedSet::with_capacity(N),
             valtree: InternedSet::with_capacity(N),
             patterns: InternedSet::with_capacity(N),
             outlives: InternedSet::with_capacity(N),
@@ -2774,10 +2724,9 @@ slice_interners!(
     place_elems: pub mk_place_elems(PlaceElem<'tcx>),
     bound_variable_kinds: pub mk_bound_variable_kinds(ty::BoundVariableKind),
     fields: pub mk_fields(FieldIdx),
-    field_paths: pub mk_field_path(FieldPathSegment),
     local_def_ids: intern_local_def_ids(LocalDefId),
     captures: intern_captures(&'tcx ty::CapturedPlace<'tcx>),
-    offset_of: pub mk_offset_of((VariantIdx, FieldIdx)),
+    field_paths: pub mk_field_path((VariantIdx, FieldIdx)),
     patterns: pub mk_patterns(Pattern<'tcx>),
     outlives: pub mk_outlives(ty::ArgOutlivesPredicate<'tcx>),
 );
@@ -3174,17 +3123,9 @@ impl<'tcx> TyCtxt<'tcx> {
     pub fn mk_field_path_from_iter<I, T>(self, iter: I) -> T::Output
     where
         I: Iterator<Item = T>,
-        T: CollectAndApply<FieldPathSegment, &'tcx List<FieldPathSegment>>,
+        T: CollectAndApply<(VariantIdx, FieldIdx), FieldPath<'tcx>>,
     {
-        T::collect_and_apply(iter, |xs| self.mk_field_path(xs))
-    }
-
-    pub fn mk_offset_of_from_iter<I, T>(self, iter: I) -> T::Output
-    where
-        I: Iterator<Item = T>,
-        T: CollectAndApply<(VariantIdx, FieldIdx), &'tcx List<(VariantIdx, FieldIdx)>>,
-    {
-        T::collect_and_apply(iter, |xs| self.mk_offset_of(xs))
+        T::collect_and_apply(iter, |xs| FieldPath { path: self.mk_field_path(xs) })
     }
 
     pub fn mk_args_trait(

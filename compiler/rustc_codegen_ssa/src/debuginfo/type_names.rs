@@ -119,12 +119,12 @@ fn push_debuginfo_type_name<'tcx>(
                 push_generic_params_internal(tcx, args, output, visited);
             }
         }
-        ty::Field(ty, field_path) => {
+        ty::Field(ty, _field_path) => {
+            output.push_str("field_of!(");
             push_debuginfo_type_name(tcx, ty, qualified, output, visited);
-            for field in field_path {
-                output.push('.');
-                output.push_str(field.0.as_str());
-            }
+            output.push_str(", ");
+            output.push(')');
+            todo!("TODO(field_projections): pretty print the fields");
         }
         ty::Tuple(component_types) => {
             if cpp_like_debuginfo {

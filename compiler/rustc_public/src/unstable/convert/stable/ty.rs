@@ -691,7 +691,7 @@ impl<'tcx> Stable<'tcx> for rustc_middle::ty::GenericParamDef {
     }
 }
 
-impl<'tcx> Stable<'tcx> for &'tcx rustc_middle::ty::List<rustc_middle::ty::FieldPathSegment> {
+impl<'tcx> Stable<'tcx> for rustc_middle::ty::FieldPath<'tcx> {
     type T = crate::ty::FieldPath;
 
     fn stable<'cx>(
@@ -699,7 +699,11 @@ impl<'tcx> Stable<'tcx> for &'tcx rustc_middle::ty::List<rustc_middle::ty::Field
         tables: &mut Tables<'cx, BridgeTys>,
         cx: &CompilerCtxt<'cx, BridgeTys>,
     ) -> Self::T {
-        crate::ty::FieldPath(self.iter().map(|seg| seg.0.stable(tables, cx)).collect())
+        crate::ty::FieldPath(
+            self.into_iter()
+                .map(|(var, field)| (var.stable(tables, cx), field.stable(tables, cx)))
+                .collect(),
+        )
     }
 }
 

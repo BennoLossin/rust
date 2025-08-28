@@ -25,8 +25,9 @@ use super::GenericParamDefKind;
 use crate::infer::canonical::Canonical;
 use crate::ty::InferTy::*;
 use crate::ty::{
-    self, AdtDef, BoundRegionKind, Discr, GenericArg, GenericArgs, GenericArgsRef, List, ParamEnv,
-    Region, Ty, TyCtxt, TypeFlags, TypeSuperVisitable, TypeVisitable, TypeVisitor, UintTy,
+    self, AdtDef, BoundRegionKind, Discr, FieldPath, GenericArg, GenericArgs, GenericArgsRef, List,
+    ParamEnv, Region, Ty, TyCtxt, TypeFlags, TypeSuperVisitable, TypeVisitable, TypeVisitor,
+    UintTy,
 };
 
 // Re-export and re-parameterize some `I = TyCtxt<'tcx>` types here
@@ -674,9 +675,9 @@ impl<'tcx> Ty<'tcx> {
     pub fn new_field_type(
         tcx: TyCtxt<'tcx>,
         container: Ty<'tcx>,
-        fields: &'tcx List<FieldPathSegment>,
+        field_path: FieldPath<'tcx>,
     ) -> Ty<'tcx> {
-        Ty::new(tcx, Field(container, fields))
+        Ty::new(tcx, Field(container, field_path))
     }
 
     #[inline]
@@ -986,8 +987,8 @@ impl<'tcx> rustc_type_ir::inherent::Ty<TyCtxt<'tcx>> for Ty<'tcx> {
 
     fn new_field_type(
         interner: TyCtxt<'tcx>,
-        container: <TyCtxt<'tcx> as rustc_type_ir::Interner>::Ty,
-        field_path: <TyCtxt<'tcx> as rustc_type_ir::Interner>::FieldPath,
+        container: Ty<'tcx>,
+        field_path: FieldPath<'tcx>,
     ) -> Self {
         Ty::new_field_type(interner, container, field_path)
     }

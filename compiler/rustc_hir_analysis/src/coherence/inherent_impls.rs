@@ -7,8 +7,6 @@
 //! `tcx.inherent_impls(def_id)`). That value, however,
 //! is computed by selecting an idea from this table.
 
-use std::ops::ControlFlow;
-
 use rustc_hir as hir;
 use rustc_hir::attrs::AttributeKind;
 use rustc_hir::def::DefKind;
@@ -20,11 +18,10 @@ use rustc_hir::find_attr;
     rustc::direct_use_of_rustc_type_ir,
     rustc::usage_of_type_ir_inherent
 )]
-use rustc_infer::infer::canonical::ir::inherent::{FieldPath, FieldPathVisitor};
 use rustc_middle::bug;
 use rustc_middle::ty::fast_reject::{SimplifiedType, TreatParams, simplify_type};
-use rustc_middle::ty::{self, CrateInherentImpls, FieldPathSegment, Ty, TyCtxt};
-use rustc_span::{ErrorGuaranteed, Symbol, sym};
+use rustc_middle::ty::{self, CrateInherentImpls, FieldPath, Ty, TyCtxt};
+use rustc_span::{ErrorGuaranteed, sym};
 
 use crate::errors;
 
@@ -124,9 +121,11 @@ impl<'tcx> InherentCollect<'tcx> {
     fn check_field_type(
         &mut self,
         id: LocalDefId,
-        container: Ty<'tcx>,
-        field_path: &'tcx ty::List<FieldPathSegment>,
+        _container: Ty<'tcx>,
+        _field_path: FieldPath<'tcx>,
     ) -> Result<(), ErrorGuaranteed> {
+        /*
+         TODO(field_projections): need to check types?
         struct Visitor<'tcx>(TyCtxt<'tcx>);
         impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor<'tcx> {
             type Output = Result<(), ErrorGuaranteed>;
@@ -152,9 +151,11 @@ impl<'tcx> InherentCollect<'tcx> {
                 Err(self.0.dcx().err("unknown field in field projections"))
             }
         }
+        */
         self.impls_map.incoherent_impls.entry(SimplifiedType::Field).or_default().push(id);
 
-        field_path.visit(container, Visitor(self.tcx), self.tcx)
+        // field_path.visit(container, Visitor(self.tcx), self.tcx)
+        Ok(())
     }
 
     fn check_primitive_impl(

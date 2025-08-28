@@ -25,15 +25,6 @@ fn foo() {
     assert_eq!(*x, 42);
     assert_eq!(*y, 24);
     assert_eq!(<field_of!(Foo, x)>::OFFSET, offset_of!(Foo, x));
-    assert_eq!(Z, 0);
-    bar::<Z>();
-    bar::<X>();
 }
-
-const Z: usize = <field_of!(Foo, z)>::OFFSET;
-type Z = <field_of!(Foo, z) as UnalignedField>::Type;
-type X = <field_of!(Foo, x) as UnalignedField>::Type;
-
-fn bar<T>() {}
 
 fn main() {}

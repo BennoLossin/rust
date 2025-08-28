@@ -39,7 +39,7 @@ use rustc_middle::middle::stability::AllowUnstable;
 use rustc_middle::mir::interpret::LitToConstInput;
 use rustc_middle::ty::print::PrintPolyTraitRefExt as _;
 use rustc_middle::ty::{
-    self, Const, FieldPathSegment, GenericArgKind, GenericArgsRef, GenericParamDefKind, Ty, TyCtxt,
+    self, Const, FieldPath, GenericArgKind, GenericArgsRef, GenericParamDefKind, Ty, TyCtxt,
     TypeVisitableExt, TypingMode, Upcast, fold_regions,
 };
 use rustc_middle::{bug, span_bug};
@@ -134,6 +134,14 @@ pub trait HirTyLowerer<'tcx> {
         hir_id: HirId,
         span: Span,
     );
+
+    fn lower_field_path(
+        &self,
+        container: &hir::Ty<'tcx>,
+        fields: &[Ident],
+        span: Span,
+        hir_id: HirId,
+    ) -> (Ty<'tcx>, FieldPath<'tcx>);
 
     /// Probe bounds in scope where the bounded type coincides with the given type parameter.
     ///
@@ -2550,11 +2558,7 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
                 Ty::new_array_with_const_len(tcx, self.lower_ty(ty), length)
             }
             hir::TyKind::FieldOf(container, fields) => {
-                let container = self.lower_ty(container);
-                let fields = self.tcx().mk_field_path_from_iter(
-                    fields.iter().map(|field| FieldPathSegment(field.name)),
-                );
-                Ty::new_field_type(tcx, container, fields)
+                self.lower_field_of(hir_ty, container, fields)
             }
             hir::TyKind::Typeof(e) => tcx.type_of(e.def_id).instantiate_identity(),
             hir::TyKind::Infer(()) => {
@@ -2720,6 +2724,17 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
         }
 
         fn_ptr_ty
+    }
+
+    fn lower_field_of(
+        &self,
+        hir_ty: &hir::Ty<'tcx>,
+        container: &hir::Ty<'tcx>,
+        fields: &[Ident],
+    ) -> Ty<'tcx> {
+        let (container, field_path) =
+            self.lower_field_path(container, fields, hir_ty.span, hir_ty.hir_id);
+        Ty::new_field_type(self.tcx(), container, field_path)
     }
 
     /// Given a fn_hir_id for a impl function, suggest the type that is found on the

@@ -821,8 +821,7 @@ impl<'tcx> ThirBuildCx<'tcx> {
 
             hir::ExprKind::OffsetOf(_, _) => {
                 let data = self.typeck_results.offset_of_data();
-                let &(container, ref indices) = data.get(expr.hir_id).unwrap();
-                let fields = tcx.mk_offset_of_from_iter(indices.iter().copied());
+                let &(container, fields) = data.get(expr.hir_id).unwrap();
 
                 ExprKind::OffsetOf { container, fields }
             }

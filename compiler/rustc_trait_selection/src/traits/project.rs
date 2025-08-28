@@ -13,8 +13,7 @@ use rustc_middle::traits::select::OverflowError;
 use rustc_middle::traits::{BuiltinImplSource, ImplSource, ImplSourceUserDefinedData};
 use rustc_middle::ty::fast_reject::DeepRejectCtxt;
 use rustc_middle::ty::{
-    self, FieldPath, FieldPathVisitor, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt,
-    TypingMode, Upcast,
+    self, FieldPathVisitor, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt, TypingMode, Upcast,
 };
 use rustc_middle::{bug, span_bug};
 use rustc_span::{Symbol, sym};
