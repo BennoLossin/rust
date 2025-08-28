@@ -127,8 +127,8 @@ impl<'tcx> InherentCollect<'tcx> {
         container: Ty<'tcx>,
         field_path: &'tcx ty::List<FieldPathSegment>,
     ) -> Result<(), ErrorGuaranteed> {
-        struct Visitor;
-        impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor {
+        struct Visitor<'tcx>(TyCtxt<'tcx>);
+        impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor<'tcx> {
             type Output = Result<(), ErrorGuaranteed>;
 
             fn visit_segment(
@@ -145,20 +145,16 @@ impl<'tcx> InherentCollect<'tcx> {
             }
 
             fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
-                // TODO(field_projections): need to generate an error here that one can't take a
-                // field of this type/ it's not supported yet (for `union`, `enum` & `tuple`)
-                todo!("field_projections")
+                Err(self.0.dcx().err("unsupported type for field projections"))
             }
 
             fn unknown_field(&mut self, _ty: Ty<'tcx>, _unknown_field: Symbol) -> Self::Output {
-                // TODO(field_projections): need to generate an error here that the field wasn't
-                // resolved.
-                todo!("field_projections");
+                Err(self.0.dcx().err("unknown field in field projections"))
             }
         }
         self.impls_map.incoherent_impls.entry(SimplifiedType::Field).or_default().push(id);
 
-        field_path.visit(container, Visitor, self.tcx)
+        field_path.visit(container, Visitor(self.tcx), self.tcx)
     }
 
     fn check_primitive_impl(

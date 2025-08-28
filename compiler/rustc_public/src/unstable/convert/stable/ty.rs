@@ -414,9 +414,9 @@ impl<'tcx> Stable<'tcx> for ty::TyKind<'tcx> {
                 generic_args.stable(tables, cx),
             )),
             #[allow(unreachable_code)]
-            ty::Field(ty, _field_path) => TyKind::RigidTy(RigidTy::Field(
+            ty::Field(ty, field_path) => TyKind::RigidTy(RigidTy::Field(
                 ty.stable(tables, cx),
-                todo!("field_projections"), // TODO(field_projections): probably `field_path.stable(tables, cx)`
+                field_path.stable(tables, cx),
             )),
             ty::Foreign(def_id) => TyKind::RigidTy(RigidTy::Foreign(tables.foreign_def(*def_id))),
             ty::Str => TyKind::RigidTy(RigidTy::Str),
@@ -688,6 +688,18 @@ impl<'tcx> Stable<'tcx> for rustc_middle::ty::GenericParamDef {
             pure_wrt_drop: self.pure_wrt_drop,
             kind: self.kind.stable(tables, cx),
         }
+    }
+}
+
+impl<'tcx> Stable<'tcx> for &'tcx rustc_middle::ty::List<rustc_middle::ty::FieldPathSegment> {
+    type T = crate::ty::FieldPath;
+
+    fn stable<'cx>(
+        &self,
+        tables: &mut Tables<'cx, BridgeTys>,
+        cx: &CompilerCtxt<'cx, BridgeTys>,
+    ) -> Self::T {
+        crate::ty::FieldPath(self.iter().map(|seg| seg.0.stable(tables, cx)).collect())
     }
 }
 

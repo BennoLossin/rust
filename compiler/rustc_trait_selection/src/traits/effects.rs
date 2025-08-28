@@ -348,7 +348,7 @@ fn evaluate_host_effect_for_destruct_goal<'tcx>(
 
         ty::Field(_, _) => {
             // TODO(field_projections): we should allow users to `impl Drop for field_of!(...)`
-            todo!("field_projections")
+            todo!("TODO(field_projections): check user drop impl")
         }
 
         ty::Array(ty, _) | ty::Pat(ty, _) | ty::Slice(ty) => {

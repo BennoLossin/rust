@@ -7,19 +7,17 @@ use rustc_data_structures::stack::ensure_sufficient_stack;
 use rustc_errors::ErrorGuaranteed;
 use rustc_hir::lang_items::LangItem;
 use rustc_infer::infer::DefineOpaqueTypes;
-// TODO(field_projections): fix this
-#[allow(rustc::direct_use_of_rustc_type_ir)]
-use rustc_infer::infer::canonical::ir::{FieldPath, FieldPathVisitor, Interner};
 use rustc_infer::infer::resolve::OpportunisticRegionResolver;
 use rustc_infer::traits::{ObligationCauseCode, PredicateObligations};
 use rustc_middle::traits::select::OverflowError;
 use rustc_middle::traits::{BuiltinImplSource, ImplSource, ImplSourceUserDefinedData};
 use rustc_middle::ty::fast_reject::DeepRejectCtxt;
 use rustc_middle::ty::{
-    self, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt, TypingMode, Upcast,
+    self, FieldPath, FieldPathVisitor, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt,
+    TypingMode, Upcast,
 };
 use rustc_middle::{bug, span_bug};
-use rustc_span::sym;
+use rustc_span::{Symbol, sym};
 use tracing::{debug, instrument};
 
 use super::{
@@ -1566,49 +1564,36 @@ fn confirm_builtin_candidate<'cx, 'tcx>(
         if tcx.is_lang_item(item_def_id, LangItem::UnalignedFieldBase) {
             (container.into(), PredicateObligations::new())
         } else if tcx.is_lang_item(item_def_id, LangItem::UnalignedFieldType) {
-            struct Visitor<I>(I);
+            struct Visitor<'tcx>(TyCtxt<'tcx>);
 
-            impl<I: Interner> FieldPathVisitor<I> for Visitor<I> {
-                type Output = I::Ty;
+            impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor<'tcx> {
+                type Output = Ty<'tcx>;
 
                 fn visit_segment(
                     &mut self,
-                    _base: I::Ty,
-                    _name: I::Symbol,
-                    _field_ty: I::Ty,
+                    _base: Ty<'tcx>,
+                    _name: Symbol,
+                    _field_ty: Ty<'tcx>,
                 ) -> ControlFlow<Self::Output> {
                     ControlFlow::Continue(())
                 }
 
-                fn visit_final(&mut self, field_ty: I::Ty, _name: I::Symbol) -> Self::Output {
+                fn visit_final(&mut self, field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
                     field_ty
                 }
 
-                fn unsupported_type(&mut self, _ty: I::Ty) -> Self::Output {
-                    todo!("field_projections")
+                fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
+                    self.0.dcx().bug("TODO(field_projections): unsupported type");
                 }
 
-                fn unknown_field(&mut self, _ty: I::Ty, _unknown_field: I::Symbol) -> Self::Output {
-                    todo!("field_projections")
+                fn unknown_field(&mut self, _ty: Ty<'tcx>, _unknown_field: Symbol) -> Self::Output {
+                    self.0.dcx().bug("TODO(field_projections): unknown field")
                 }
             }
             (field_path.visit(container, Visitor(tcx), tcx).into(), PredicateObligations::new())
         } else {
             bug!("unexpected associated type {:?} in `UnalignedField`", obligation.predicate);
         }
-    } else if tcx.is_lang_item(trait_def_id, LangItem::PinnableField) {
-        /*
-         * TODO(field_projections): add pinnable stuff
-        let ty::Field(container, field_path) = self_ty.kind() else {
-            bug!("only `field_of!()` can implement `UnalignedField`")
-        };
-        if tcx.is_lang_item(item_def_id, LangItem::PinnableFieldProjected) {
-            (container, PredicateObligations::new())
-        } else {
-            bug!("unexpected associated type {:?} in `PinnableField`", obligation.predicate);
-        }
-        */
-        todo!("field_projections")
     } else {
         bug!("unexpected builtin trait with associated type: {:?}", obligation.predicate);
     };

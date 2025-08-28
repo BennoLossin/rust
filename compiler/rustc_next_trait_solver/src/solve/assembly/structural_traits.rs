@@ -769,8 +769,7 @@ pub(in crate::solve) fn const_conditions_for_destruct<I: Interner>(
         }
 
         ty::Field(_, _) => {
-            // TODO(field_projections): we should allow users to `impl Drop for field_of!(...)`
-            todo!("field_projections")
+            todo!("TODO(field_projections): custom drop")
         }
 
         ty::Array(ty, _) | ty::Pat(ty, _) | ty::Slice(ty) => {

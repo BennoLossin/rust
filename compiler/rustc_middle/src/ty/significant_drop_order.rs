@@ -150,8 +150,7 @@ pub fn ty_dtor_span<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Option<Span> {
             }
         }
         ty::Field(_, _) => {
-            // TODO(field_projections): this should just refer to the `Drop` impl of the field type.
-            todo!("field_projections");
+            todo!("TODO(field_projections): custom drop");
         }
         ty::Coroutine(did, _)
         | ty::CoroutineWitness(did, _)

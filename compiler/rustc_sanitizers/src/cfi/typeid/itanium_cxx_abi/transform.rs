@@ -183,7 +183,9 @@ impl<'tcx> TypeFolder<TyCtxt<'tcx>> for TransformTy<'tcx> {
                 }
             }
 
-            ty::Field(..) => todo!("field_projections"),
+            ty::Field(..) => todo!(
+                "TODO(field_projections): no idea what to do here, probably don't need to handle field types here?"
+            ),
 
             ty::Ref(..) => {
                 if self.options.contains(TransformTyOptions::GENERALIZE_POINTERS) {

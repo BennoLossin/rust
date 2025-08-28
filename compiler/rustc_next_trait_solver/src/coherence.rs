@@ -451,9 +451,7 @@ where
                         ) -> ControlFlow<Self::Output> {
                             self.first_local_type.get_or_insert(base);
                             let ty::Adt(def, _) = base.kind() else {
-                                // TODO(field_projections): replace when more than just adts are
-                                // supported
-                                todo!("field_projections")
+                                panic!("TODO(field_projections): only adts are supported at the moment")
                             };
                             // We don't check the field type for locality, since having a non-local
                             // type as a field in a struct shouldn't make the field type non-local.

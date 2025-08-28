@@ -662,7 +662,7 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                     list: Vec<(VariantIdx, FieldIdx)>,
                 }
                 impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor {
-                    type Output = Vec<(VariantIdx, FieldIdx)>;
+                    type Output = Option<Vec<(VariantIdx, FieldIdx)>>;
 
                     fn visit_segment(
                         &mut self,
@@ -687,11 +687,11 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                     }
 
                     fn visit_final(&mut self, _field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
-                        std::mem::take(&mut self.list)
+                        Some(std::mem::take(&mut self.list))
                     }
 
                     fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
-                        todo!()
+                        None
                     }
 
                     fn unknown_field(
@@ -699,14 +699,24 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
                         _ty: Ty<'tcx>,
                         _unknown_field: Symbol,
                     ) -> Self::Output {
-                        todo!()
+                        None
                     }
                 }
-                let offset_of_path =
-                    field_path.visit(container, Visitor { list: Vec::new() }, self.tcx.tcx);
-                let offset_of_path = self.tcx.mk_offset_of_from_iter(offset_of_path.into_iter());
-                let offset = self.nullary_op(NullOp::OffsetOf(offset_of_path), container)?;
-                self.write_immediate(*offset, dest)
+                if let Some(offset_of_path) =
+                    field_path.visit(container, Visitor { list: Vec::new() }, self.tcx.tcx)
+                {
+                    let offset_of_path =
+                        self.tcx.mk_offset_of_from_iter(offset_of_path.into_iter());
+                    let offset = self.nullary_op(NullOp::OffsetOf(offset_of_path), container)?;
+                    self.write_immediate(*offset, dest)
+                } else {
+                    // We failed to find the correct field offset, since the actual field doesn't
+                    // seem to exist.
+                    self.write_immediate(
+                        *ImmTy::from_uint(0u64, self.layout_of(self.tcx.types.usize).unwrap()),
+                        dest,
+                    )
+                }
             }
             _ => bug!("expected field representing type, found {}", instance.args.type_at(0)),
         }

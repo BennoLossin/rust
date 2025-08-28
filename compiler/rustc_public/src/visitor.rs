@@ -165,9 +165,8 @@ impl Visitable for RigidTy {
                 ty.visit(visitor)
             }
             RigidTy::Field(ty, _field_path) => {
-                ty.visit(visitor)?;
+                ty.visit(visitor)
                 // TODO(field_projections): also visit _field_path?
-                todo!("field_projections")
             }
             RigidTy::Adt(_, args)
             | RigidTy::Closure(_, args)
