@@ -1168,7 +1168,8 @@ impl<'tcx> Ty<'tcx> {
             | ty::RawPtr(_, _)
             | ty::FnDef(..)
             | ty::Error(_)
-            | ty::FnPtr(..) => true,
+            | ty::FnPtr(..)
+            | ty::Field(..) => true,
             ty::Tuple(fields) => fields.iter().all(Self::is_trivially_freeze),
             ty::Pat(ty, _) | ty::Slice(ty) | ty::Array(ty, _) => ty.is_trivially_freeze(),
             ty::Adt(..)
@@ -1213,6 +1214,7 @@ impl<'tcx> Ty<'tcx> {
             ty::Tuple(fields) => fields.iter().all(Self::is_trivially_unpin),
             ty::Pat(ty, _) | ty::Slice(ty) | ty::Array(ty, _) => ty.is_trivially_unpin(),
             ty::Adt(..)
+            | ty::Field(..)
             | ty::Bound(..)
             | ty::Closure(..)
             | ty::CoroutineClosure(..)
@@ -1268,6 +1270,7 @@ impl<'tcx> Ty<'tcx> {
                 elem_ty.is_trivially_not_async_drop()
             }
             ty::Adt(..)
+            | ty::Field(..)
             | ty::Bound(..)
             | ty::Closure(..)
             | ty::CoroutineClosure(..)
@@ -1409,7 +1412,7 @@ impl<'tcx> Ty<'tcx> {
     pub fn is_structural_eq_shallow(self, tcx: TyCtxt<'tcx>) -> bool {
         match self.kind() {
             // Look for an impl of `StructuralPartialEq`.
-            ty::Adt(..) => tcx.has_structural_eq_impl(self),
+            ty::Adt(..) | ty::Field(..) => tcx.has_structural_eq_impl(self),
 
             // Primitive types that satisfy `Eq`.
             ty::Bool | ty::Char | ty::Int(_) | ty::Uint(_) | ty::Str | ty::Never => true,
@@ -1545,6 +1548,7 @@ pub fn needs_drop_components_with_async<'tcx>(
 
         // These require checking for `Copy` bounds or `Adt` destructors.
         ty::Adt(..)
+        | ty::Field(..)
         | ty::Alias(..)
         | ty::Param(_)
         | ty::Bound(..)

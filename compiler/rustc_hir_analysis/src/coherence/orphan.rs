@@ -151,6 +151,10 @@ pub(crate) fn orphan_check_impl(
                 },
             ),
 
+            ty::Field(_ty, _field_path) => {
+                todo!("TODO(field_projections): orphan check")
+            }
+
             // extern { type OpaqueType; }
             // impl AutoTrait for OpaqueType {}
             ty::Foreign(did) => (

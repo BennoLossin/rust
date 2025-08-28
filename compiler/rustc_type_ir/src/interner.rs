@@ -130,6 +130,10 @@ pub trait Interner:
     type Safety: Safety<Self>;
     type Abi: Abi<Self>;
 
+    // TODO(field_projections): remove if not necessary.
+    // type FieldPathSegment: FieldPathSegment<Self>;
+    type FieldPath: FieldPath<Self>;
+
     // Kinds of consts
     type Const: Const<Self>;
     type ParamConst: Copy + Debug + Hash + Eq + ParamLike;

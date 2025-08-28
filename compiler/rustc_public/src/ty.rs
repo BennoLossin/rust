@@ -550,6 +550,7 @@ pub enum RigidTy {
     Uint(UintTy),
     Float(FloatTy),
     Adt(AdtDef, GenericArgs),
+    Field(Ty, FieldPath),
     Foreign(ForeignDef),
     Str,
     Array(Ty, TyConst),
@@ -1052,6 +1053,9 @@ impl GenericArgKind {
         }
     }
 }
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize)]
+pub struct FieldPath(pub Vec<Symbol>);
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum TermKind {

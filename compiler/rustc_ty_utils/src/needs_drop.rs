@@ -260,6 +260,11 @@ where
                             queue_type(self, required);
                         }
                     }
+
+                    // TODO(field_projections): maybe let the user implement `Drop` manually.
+                    // if not, still need to deny any `Drop` impls.
+                    ty::Field(..) => {}
+
                     ty::Alias(..) | ty::Array(..) | ty::Placeholder(_) | ty::Param(_) => {
                         if ty == component {
                             // Return the type to the caller: they may be able

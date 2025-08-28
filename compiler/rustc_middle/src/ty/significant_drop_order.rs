@@ -149,6 +149,9 @@ pub fn ty_dtor_span<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Option<Span> {
                 Some(tcx.def_span(adt_def.did()))
             }
         }
+        ty::Field(_, _) => {
+            todo!("TODO(field_projections): custom drop");
+        }
         ty::Coroutine(did, _)
         | ty::CoroutineWitness(did, _)
         | ty::CoroutineClosure(did, _)

@@ -13,10 +13,11 @@ use rustc_middle::traits::select::OverflowError;
 use rustc_middle::traits::{BuiltinImplSource, ImplSource, ImplSourceUserDefinedData};
 use rustc_middle::ty::fast_reject::DeepRejectCtxt;
 use rustc_middle::ty::{
-    self, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt, TypingMode, Upcast,
+    self, FieldPath, FieldPathVisitor, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt,
+    TypingMode, Upcast,
 };
 use rustc_middle::{bug, span_bug};
-use rustc_span::sym;
+use rustc_span::{Symbol, sym};
 use tracing::{debug, instrument};
 
 use super::{
@@ -996,7 +997,10 @@ fn assemble_candidates_from_impls<'cx, 'tcx>(
                         | LangItem::FnOnce
                         | LangItem::AsyncFn
                         | LangItem::AsyncFnMut
-                        | LangItem::AsyncFnOnce,
+                        | LangItem::AsyncFnOnce
+                        | LangItem::Field
+                        | LangItem::UnalignedField
+                        | LangItem::PinnableField,
                     ) => true,
                     Some(LangItem::AsyncFnKindHelper) => {
                         // FIXME(async_closures): Validity constraints here could be cleaned up.
@@ -1023,6 +1027,7 @@ fn assemble_candidates_from_impls<'cx, 'tcx>(
                         | ty::Uint(_)
                         | ty::Float(_)
                         | ty::Adt(..)
+                        | ty::Field(..)
                         | ty::Foreign(_)
                         | ty::Str
                         | ty::Array(..)
@@ -1097,6 +1102,8 @@ fn assemble_candidates_from_impls<'cx, 'tcx>(
                             // If returned by `struct_tail` this is a unit struct
                             // without any fields, or not a struct, and therefore is Sized.
                             | ty::Adt(..)
+                            // field traits are always sized
+                            | ty::Field(..)
                             // If returned by `struct_tail` this is the empty tuple.
                             | ty::Tuple(..)
                             // Integers and floats are always Sized, and so have unit type metadata.
@@ -1550,6 +1557,43 @@ fn confirm_builtin_candidate<'cx, 'tcx>(
             }
         });
         (metadata_ty.into(), obligations)
+    } else if tcx.is_lang_item(trait_def_id, LangItem::UnalignedField) {
+        let &ty::Field(container, field_path) = self_ty.kind() else {
+            bug!("only `field_of!()` can implement `UnalignedField`")
+        };
+        if tcx.is_lang_item(item_def_id, LangItem::UnalignedFieldBase) {
+            (container.into(), PredicateObligations::new())
+        } else if tcx.is_lang_item(item_def_id, LangItem::UnalignedFieldType) {
+            struct Visitor<'tcx>(TyCtxt<'tcx>);
+
+            impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor<'tcx> {
+                type Output = Ty<'tcx>;
+
+                fn visit_segment(
+                    &mut self,
+                    _base: Ty<'tcx>,
+                    _name: Symbol,
+                    _field_ty: Ty<'tcx>,
+                ) -> ControlFlow<Self::Output> {
+                    ControlFlow::Continue(())
+                }
+
+                fn visit_final(&mut self, field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
+                    field_ty
+                }
+
+                fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
+                    self.0.dcx().bug("TODO(field_projections): unsupported type");
+                }
+
+                fn unknown_field(&mut self, _ty: Ty<'tcx>, _unknown_field: Symbol) -> Self::Output {
+                    self.0.dcx().bug("TODO(field_projections): unknown field")
+                }
+            }
+            (field_path.visit(container, Visitor(tcx), tcx).into(), PredicateObligations::new())
+        } else {
+            bug!("unexpected associated type {:?} in `UnalignedField`", obligation.predicate);
+        }
     } else {
         bug!("unexpected builtin trait with associated type: {:?}", obligation.predicate);
     };

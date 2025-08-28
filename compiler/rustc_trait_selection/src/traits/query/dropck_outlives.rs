@@ -77,6 +77,8 @@ pub fn trivial_dropck_outlives<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> bool {
             }
         }
 
+        ty::Field(..) => false,
+
         // The following *might* require a destructor: needs deeper inspection.
         ty::Dynamic(..)
         | ty::Alias(..)
@@ -396,6 +398,9 @@ pub fn dtorck_constraint_for_ty_inner<'tcx>(
                 .overflows
                 .extend(overflows.iter().map(|t| EarlyBinder::bind(*t).instantiate(tcx, args)));
         }
+
+        // TODO(field_projections): currently no `Drop` impl, later need to either deny or allow it.
+        ty::Field(..) => {}
 
         // Objects must be alive in order for their destructor
         // to be called.

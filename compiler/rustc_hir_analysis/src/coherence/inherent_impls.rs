@@ -7,15 +7,24 @@
 //! `tcx.inherent_impls(def_id)`). That value, however,
 //! is computed by selecting an idea from this table.
 
+use std::ops::ControlFlow;
+
 use rustc_hir as hir;
 use rustc_hir::attrs::AttributeKind;
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_hir::find_attr;
+// TODO(field_projections): this allow seems wrong, but there are no re-exports of these?
+#[allow(
+    rustc::non_glob_import_of_type_ir_inherent,
+    rustc::direct_use_of_rustc_type_ir,
+    rustc::usage_of_type_ir_inherent
+)]
+use rustc_infer::infer::canonical::ir::inherent::{FieldPath, FieldPathVisitor};
 use rustc_middle::bug;
 use rustc_middle::ty::fast_reject::{SimplifiedType, TreatParams, simplify_type};
-use rustc_middle::ty::{self, CrateInherentImpls, Ty, TyCtxt};
-use rustc_span::{ErrorGuaranteed, sym};
+use rustc_middle::ty::{self, CrateInherentImpls, FieldPathSegment, Ty, TyCtxt};
+use rustc_span::{ErrorGuaranteed, Symbol, sym};
 
 use crate::errors;
 
@@ -112,6 +121,42 @@ impl<'tcx> InherentCollect<'tcx> {
         }
     }
 
+    fn check_field_type(
+        &mut self,
+        id: LocalDefId,
+        container: Ty<'tcx>,
+        field_path: &'tcx ty::List<FieldPathSegment>,
+    ) -> Result<(), ErrorGuaranteed> {
+        struct Visitor<'tcx>(TyCtxt<'tcx>);
+        impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor<'tcx> {
+            type Output = Result<(), ErrorGuaranteed>;
+
+            fn visit_segment(
+                &mut self,
+                _base: Ty<'tcx>,
+                _name: Symbol,
+                _field_ty: Ty<'tcx>,
+            ) -> ControlFlow<Self::Output> {
+                ControlFlow::Continue(())
+            }
+
+            fn visit_final(&mut self, _field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
+                Ok(())
+            }
+
+            fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
+                Err(self.0.dcx().err("unsupported type for field projections"))
+            }
+
+            fn unknown_field(&mut self, _ty: Ty<'tcx>, _unknown_field: Symbol) -> Self::Output {
+                Err(self.0.dcx().err("unknown field in field projections"))
+            }
+        }
+        self.impls_map.incoherent_impls.entry(SimplifiedType::Field).or_default().push(id);
+
+        field_path.visit(container, Visitor(self.tcx), self.tcx)
+    }
+
     fn check_primitive_impl(
         &mut self,
         impl_def_id: LocalDefId,
@@ -166,6 +211,7 @@ impl<'tcx> InherentCollect<'tcx> {
         }
         match *self_ty.kind() {
             ty::Adt(def, _) => self.check_def_id(id, self_ty, def.did()),
+            ty::Field(container, field_path) => self.check_field_type(id, container, field_path),
             ty::Foreign(did) => self.check_def_id(id, self_ty, did),
             ty::Dynamic(data, ..) if data.principal_def_id().is_some() => {
                 self.check_def_id(id, self_ty, data.principal_def_id().unwrap())
