@@ -281,7 +281,7 @@ impl<'tcx> HirTyLowerer<'tcx> for FnCtxt<'_, 'tcx> {
         fields: &[Ident],
         span: Span,
         hir_id: HirId,
-    ) -> (Ty<'tcx>, FieldPath<'tcx>) {
+    ) -> Result<(Ty<'tcx>, FieldPath<'tcx>), ErrorGuaranteed> {
         let container = self.lower_ty(container).normalized;
 
         let mut field_indices = Vec::with_capacity(fields.len());
@@ -312,14 +312,14 @@ impl<'tcx> HirTyLowerer<'tcx> for FnCtxt<'_, 'tcx> {
                         .iter_enumerated()
                         .find(|(_, v)| v.ident(self.tcx).normalize_to_macros_2_0() == ident)
                     else {
-                        self.dcx()
+                        return Err(self
+                            .dcx()
                             .create_err(NoVariantNamed { span: ident.span, ident, ty: container })
                             .with_span_label(field.span, "variant not found")
-                            .emit_unless_delay(container.references_error());
-                        break;
+                            .emit_unless_delay(container.references_error()));
                     };
                     let Some(&subfield) = fields.next() else {
-                        type_error_struct!(
+                        return Err(type_error_struct!(
                             self.dcx(),
                             ident.span,
                             container,
@@ -327,8 +327,7 @@ impl<'tcx> HirTyLowerer<'tcx> for FnCtxt<'_, 'tcx> {
                             "`{ident}` is an enum variant; expected field at end of `offset_of`",
                         )
                         .with_span_label(field.span, "enum variant")
-                        .emit();
-                        break;
+                        .emit());
                     };
                     let (subident, sub_def_scope) =
                         self.tcx.adjust_ident_and_get_scope(subfield, variant.def_id, block);
@@ -338,7 +337,8 @@ impl<'tcx> HirTyLowerer<'tcx> for FnCtxt<'_, 'tcx> {
                         .iter_enumerated()
                         .find(|(_, f)| f.ident(self.tcx).normalize_to_macros_2_0() == subident)
                     else {
-                        self.dcx()
+                        return Err(self
+                            .dcx()
                             .create_err(NoFieldOnVariant {
                                 span: ident.span,
                                 container,
@@ -347,8 +347,7 @@ impl<'tcx> HirTyLowerer<'tcx> for FnCtxt<'_, 'tcx> {
                                 enum_span: field.span,
                                 field_span: subident.span,
                             })
-                            .emit_unless_delay(container.references_error());
-                        break;
+                            .emit_unless_delay(container.references_error()));
                     };
 
                     let field_ty = self.field_ty(span, field, args);
@@ -435,11 +434,9 @@ impl<'tcx> HirTyLowerer<'tcx> for FnCtxt<'_, 'tcx> {
                 _ => (),
             };
 
-            self.no_such_field_err(field, container, span, hir_id).emit();
-
-            break;
+            return Err(self.no_such_field_err(field, container, span, hir_id).emit());
         }
-        (container, self.tcx.mk_field_path_from_iter(field_indices.into_iter()))
+        Ok((container, self.tcx.mk_field_path_from_iter(field_indices.into_iter())))
     }
 
     fn register_trait_ascription_bounds(

@@ -119,12 +119,18 @@ fn push_debuginfo_type_name<'tcx>(
                 push_generic_params_internal(tcx, args, output, visited);
             }
         }
-        ty::Field(ty, _field_path) => {
+        ty::Field(container, field_path) => {
             output.push_str("field_of!(");
-            push_debuginfo_type_name(tcx, ty, qualified, output, visited);
+            push_debuginfo_type_name(tcx, container, qualified, output, visited);
             output.push_str(", ");
+            field_path.walk(tcx, container, |_, name, _| {
+                output.push_str(name.as_str());
+                output.push('.');
+                std::ops::ControlFlow::<()>::Continue(())
+            });
+            // remove trailing `.`
+            output.pop();
             output.push(')');
-            todo!("TODO(field_projections): pretty print the fields");
         }
         ty::Tuple(component_types) => {
             if cpp_like_debuginfo {

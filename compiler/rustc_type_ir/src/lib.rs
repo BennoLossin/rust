@@ -70,7 +70,7 @@ pub use fold::*;
 pub use generic_arg::*;
 pub use infer_ctxt::*;
 #[allow(rustc::non_glob_import_of_type_ir_inherent)]
-pub use inherent::{FieldPath, FieldPathVisitor};
+pub use inherent::FieldPath;
 pub use interner::*;
 pub use opaque_ty::*;
 pub use pattern::*;

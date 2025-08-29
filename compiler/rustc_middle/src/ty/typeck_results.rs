@@ -226,7 +226,7 @@ pub struct TypeckResults<'tcx> {
     pub transmutes_to_check: Vec<(Ty<'tcx>, Ty<'tcx>, HirId)>,
 
     /// Container types and field indices of `offset_of!` expressions
-    offset_of_data: ItemLocalMap<(Ty<'tcx>, FieldPath<'tcx>)>,
+    offset_of_data: ItemLocalMap<Result<(Ty<'tcx>, FieldPath<'tcx>), ErrorGuaranteed>>,
 }
 
 impl<'tcx> TypeckResults<'tcx> {
@@ -559,13 +559,15 @@ impl<'tcx> TypeckResults<'tcx> {
         &self.coercion_casts
     }
 
-    pub fn offset_of_data(&self) -> LocalTableInContext<'_, (Ty<'tcx>, FieldPath<'tcx>)> {
+    pub fn offset_of_data(
+        &self,
+    ) -> LocalTableInContext<'_, Result<(Ty<'tcx>, FieldPath<'tcx>), ErrorGuaranteed>> {
         LocalTableInContext { hir_owner: self.hir_owner, data: &self.offset_of_data }
     }
 
     pub fn offset_of_data_mut(
         &mut self,
-    ) -> LocalTableInContextMut<'_, (Ty<'tcx>, FieldPath<'tcx>)> {
+    ) -> LocalTableInContextMut<'_, Result<(Ty<'tcx>, FieldPath<'tcx>), ErrorGuaranteed>> {
         LocalTableInContextMut { hir_owner: self.hir_owner, data: &mut self.offset_of_data }
     }
 }

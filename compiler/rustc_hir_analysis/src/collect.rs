@@ -353,7 +353,7 @@ impl<'tcx> HirTyLowerer<'tcx> for ItemCtxt<'tcx> {
         _fields: &[Ident],
         _span: Span,
         _hir_id: HirId,
-    ) -> (Ty<'tcx>, FieldPath<'tcx>) {
+    ) -> Result<(Ty<'tcx>, FieldPath<'tcx>), ErrorGuaranteed> {
         todo!("TODO(field_projections): not enough context to do field path lowering?")
     }
 

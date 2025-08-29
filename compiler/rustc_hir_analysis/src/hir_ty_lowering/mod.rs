@@ -141,7 +141,7 @@ pub trait HirTyLowerer<'tcx> {
         fields: &[Ident],
         span: Span,
         hir_id: HirId,
-    ) -> (Ty<'tcx>, FieldPath<'tcx>);
+    ) -> Result<(Ty<'tcx>, FieldPath<'tcx>), ErrorGuaranteed>;
 
     /// Probe bounds in scope where the bounded type coincides with the given type parameter.
     ///
@@ -2732,9 +2732,10 @@ impl<'tcx> dyn HirTyLowerer<'tcx> + '_ {
         container: &hir::Ty<'tcx>,
         fields: &[Ident],
     ) -> Ty<'tcx> {
-        let (container, field_path) =
-            self.lower_field_path(container, fields, hir_ty.span, hir_ty.hir_id);
-        Ty::new_field_type(self.tcx(), container, field_path)
+        match self.lower_field_path(container, fields, hir_ty.span, hir_ty.hir_id) {
+            Ok((container, field_path)) => Ty::new_field_type(self.tcx(), container, field_path),
+            Err(err) => Ty::new_error(self.tcx(), err),
+        }
     }
 
     /// Given a fn_hir_id for a impl function, suggest the type that is found on the

@@ -75,7 +75,7 @@ pub trait Ty<I: Interner<Ty = Self>>:
 
     fn new_adt(interner: I, adt_def: I::AdtDef, args: I::GenericArgs) -> Self;
 
-    fn new_field_type(interner: I, contanier: I::Ty, field_path: I::FieldPath) -> Self;
+    fn new_field_type(interner: I, container: I::Ty, field_path: I::FieldPath) -> Self;
 
     fn new_foreign(interner: I, def_id: I::DefId) -> Self;
 
@@ -630,30 +630,30 @@ pub trait AdtDef<I: Interner>: Copy + Debug + Hash + Eq {
     fn destructor(self, interner: I) -> Option<AdtDestructorKind>;
 }
 
-// TODO(field_projections): do we really need this?
-pub trait FieldPathSegment<I: Interner>: Copy + Debug + Hash + Eq {
-    /* nothing yet */
-}
-
 pub trait FieldPath<I: Interner>: Copy + Debug + Hash + Eq {
-    fn visit<V: FieldPathVisitor<I>>(self, container: I::Ty, visitor: V, interner: I) -> V::Output;
-}
+    fn walk<T>(
+        self,
+        interner: I,
+        container: I::Ty,
+        walker: impl FnMut(I::Ty, I::Symbol, I::Ty) -> ControlFlow<T>,
+    ) -> Option<T>;
 
-pub trait FieldPathVisitor<I: Interner> {
-    type Output;
+    fn walk_split<T>(
+        self,
+        interner: I,
+        container: I::Ty,
+        segment: impl FnMut(I::Ty, I::Symbol, I::Ty) -> ControlFlow<T>,
+        tail: impl FnOnce(I::Ty, I::Symbol, I::Ty) -> T,
+    ) -> T;
 
-    fn visit_segment(
-        &mut self,
-        base: I::Ty,
-        name: I::Symbol,
-        field_ty: I::Ty,
-    ) -> ControlFlow<Self::Output>;
-
-    fn visit_final(&mut self, field_ty: I::Ty, name: I::Symbol) -> Self::Output;
-
-    fn unsupported_type(&mut self, ty: I::Ty) -> Self::Output;
-
-    fn unknown_field(&mut self, ty: I::Ty, unknown_field: I::Symbol) -> Self::Output;
+    fn field_ty(self, interner: I, container: I::Ty) -> I::Ty {
+        self.walk_split(
+            interner,
+            container,
+            |_, _, _| ControlFlow::Continue(()),
+            |_, _, field_ty| field_ty,
+        )
+    }
 }
 
 pub trait ParamEnv<I: Interner>: Copy + Debug + Hash + Eq + TypeFoldable<I> {

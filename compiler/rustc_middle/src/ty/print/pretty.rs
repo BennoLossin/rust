@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use std::fmt::{self, Write as _};
 use std::iter;
-use std::ops::{Deref, DerefMut};
+use std::ops::{ControlFlow, Deref, DerefMut};
 
 use rustc_abi::{ExternAbi, Size};
 use rustc_apfloat::Float;
@@ -784,11 +784,23 @@ pub trait PrettyPrinter<'tcx>: Printer<'tcx> + fmt::Write {
                 },
             },
             ty::Adt(def, args) => self.print_def_path(def.did(), args)?,
-            ty::Field(ty, field_path) => {
+            ty::Field(container, field_path) => {
                 write!(self, "field_of!(")?;
-                self.pretty_print_type(ty)?;
-                // TODO(field_projections): implement better pretty printing
-                write!(self, ", {field_path:?})")?;
+                self.pretty_print_type(container)?;
+                // TODO(field_projections): use better comma printing?
+                write!(self, ", ")?;
+                field_path
+                    .walk(
+                        self.tcx(),
+                        container,
+                        // TODO(field_projections): get rid of trailing `.`.
+                        |_, name, _| match write!(self, "{name}.") {
+                            Err(err) => ControlFlow::Break(Err(err)),
+                            Ok(()) => ControlFlow::Continue(()),
+                        },
+                    )
+                    .unwrap_or(Ok(()))?;
+                write!(self, ")")?;
             }
             ty::Dynamic(data, r, repr) => {
                 let print_r = self.should_print_optional_region(r);

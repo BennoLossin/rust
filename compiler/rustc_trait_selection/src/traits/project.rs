@@ -13,10 +13,10 @@ use rustc_middle::traits::select::OverflowError;
 use rustc_middle::traits::{BuiltinImplSource, ImplSource, ImplSourceUserDefinedData};
 use rustc_middle::ty::fast_reject::DeepRejectCtxt;
 use rustc_middle::ty::{
-    self, FieldPathVisitor, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt, TypingMode, Upcast,
+    self, Term, Ty, TyCtxt, TypeFoldable, TypeVisitableExt, TypingMode, Upcast,
 };
 use rustc_middle::{bug, span_bug};
-use rustc_span::{Symbol, sym};
+use rustc_span::sym;
 use tracing::{debug, instrument};
 
 use super::{
@@ -1563,33 +1563,7 @@ fn confirm_builtin_candidate<'cx, 'tcx>(
         if tcx.is_lang_item(item_def_id, LangItem::UnalignedFieldBase) {
             (container.into(), PredicateObligations::new())
         } else if tcx.is_lang_item(item_def_id, LangItem::UnalignedFieldType) {
-            struct Visitor<'tcx>(TyCtxt<'tcx>);
-
-            impl<'tcx> FieldPathVisitor<TyCtxt<'tcx>> for Visitor<'tcx> {
-                type Output = Ty<'tcx>;
-
-                fn visit_segment(
-                    &mut self,
-                    _base: Ty<'tcx>,
-                    _name: Symbol,
-                    _field_ty: Ty<'tcx>,
-                ) -> ControlFlow<Self::Output> {
-                    ControlFlow::Continue(())
-                }
-
-                fn visit_final(&mut self, field_ty: Ty<'tcx>, _name: Symbol) -> Self::Output {
-                    field_ty
-                }
-
-                fn unsupported_type(&mut self, _ty: Ty<'tcx>) -> Self::Output {
-                    self.0.dcx().bug("TODO(field_projections): unsupported type");
-                }
-
-                fn unknown_field(&mut self, _ty: Ty<'tcx>, _unknown_field: Symbol) -> Self::Output {
-                    self.0.dcx().bug("TODO(field_projections): unknown field")
-                }
-            }
-            (field_path.visit(container, Visitor(tcx), tcx).into(), PredicateObligations::new())
+            (field_path.field_ty(tcx, container).into(), PredicateObligations::new())
         } else {
             bug!("unexpected associated type {:?} in `UnalignedField`", obligation.predicate);
         }

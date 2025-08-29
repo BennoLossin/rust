@@ -3845,13 +3845,9 @@ impl<'a, 'tcx> FnCtxt<'a, 'tcx> {
         fields: &[Ident],
         expr: &'tcx hir::Expr<'tcx>,
     ) -> Ty<'tcx> {
-        let (container, field_path) =
-            self.lower_field_path(container, fields, expr.span, expr.hir_id);
+        let result = self.lower_field_path(container, fields, expr.span, expr.hir_id);
 
-        self.typeck_results
-            .borrow_mut()
-            .offset_of_data_mut()
-            .insert(expr.hir_id, (container, field_path));
+        self.typeck_results.borrow_mut().offset_of_data_mut().insert(expr.hir_id, result);
 
         self.tcx.types.usize
     }

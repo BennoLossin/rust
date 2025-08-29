@@ -821,9 +821,12 @@ impl<'tcx> ThirBuildCx<'tcx> {
 
             hir::ExprKind::OffsetOf(_, _) => {
                 let data = self.typeck_results.offset_of_data();
-                let &(container, fields) = data.get(expr.hir_id).unwrap();
-
-                ExprKind::OffsetOf { container, fields }
+                match data.get(expr.hir_id).unwrap() {
+                    &Ok((container, fields)) => ExprKind::OffsetOf { container, fields },
+                    Err(err) => {
+                        bug!("TODO(field_projections): allow some error expression? {err:?}")
+                    }
+                }
             }
 
             hir::ExprKind::ConstBlock(ref anon_const) => {
