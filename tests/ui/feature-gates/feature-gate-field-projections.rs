@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::marker::Field; //~ ERROR: use of unstable library feature `field_projections`
+use std::field::Field; //~ ERROR: use of unstable library feature `field_projections`
 use std::ptr;
 
 fn project_ref<F: Field>( //~ ERROR: use of unstable library feature `field_projections`

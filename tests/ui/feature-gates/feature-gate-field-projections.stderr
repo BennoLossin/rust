@@ -1,8 +1,8 @@
 error[E0658]: use of unstable library feature `field_projections`
   --> $DIR/feature-gate-field-projections.rs:3:5
    |
-LL | use std::marker::Field;
-   |     ^^^^^^^^^^^^^^^^^^
+LL | use std::field::Field;
+   |     ^^^^^^^^^^^^^^^^^
    |
    = note: see issue #145383 <https://github.com/rust-lang/rust/issues/145383> for more information
    = help: add `#![feature(field_projections)]` to the crate attributes to enable
