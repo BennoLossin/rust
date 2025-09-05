@@ -3314,3 +3314,9 @@ pub unsafe fn va_arg<T: VaArgSafe>(ap: &mut VaListImpl<'_>) -> T;
 #[rustc_intrinsic]
 #[rustc_nounwind]
 pub unsafe fn va_end(ap: &mut VaListImpl<'_>);
+
+/// `offset_of!` for `UnalignedField` trait.
+#[rustc_intrinsic_const_stable_indirect]
+#[rustc_intrinsic]
+#[lang = "unaligned_field_offset"]
+pub const fn unaligned_field_offset<F: crate::field::UnalignedField>() -> usize;
