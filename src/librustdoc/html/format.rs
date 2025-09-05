@@ -1034,6 +1034,12 @@ fn fmt_type(
             print_generic_bounds(bounds, cx).fmt(f)
         }
         clean::QPath(qpath) => qpath.print(cx).fmt(f),
+        clean::Field(container, field_path) => {
+            f.write_str("field_of!(")?;
+            fmt_type(&container, f, use_absolute, cx)?;
+            f.write_str(field_path)?;
+            f.write_str(")")
+        }
     }
 }
 
