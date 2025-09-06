@@ -161,6 +161,9 @@ hir_analysis_drop_impl_on_wrong_item =
     the `{$trait_}` trait may only be implemented for local structs, enums, and unions
     .label = must be a struct, enum, or union in the current crate
 
+hir_analysis_field_trait_impl =
+    the `{$trait_}` trait may not be implemented manually
+
 hir_analysis_drop_impl_reservation = reservation `Drop` impls are not supported
 
 hir_analysis_duplicate_precise_capture = cannot capture parameter `{$name}` twice
@@ -612,3 +615,4 @@ hir_analysis_wrong_number_of_generic_arguments_to_intrinsic =
         [one] parameter
         *[other] parameters
     }
+hir_analysis_no_field_on_type = no field `{$field}` on type `{$ty}`

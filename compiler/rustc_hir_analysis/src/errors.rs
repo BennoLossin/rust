@@ -209,6 +209,14 @@ pub(crate) struct DropImplOnWrongItem {
 }
 
 #[derive(Diagnostic)]
+#[diag(hir_analysis_field_trait_impl, code = E0806)]
+pub(crate) struct FieldTraitImpl {
+    #[primary_span]
+    pub span: Span,
+    pub trait_: Symbol,
+}
+
+#[derive(Diagnostic)]
 pub(crate) enum FieldAlreadyDeclared {
     #[diag(hir_analysis_field_already_declared, code = E0124)]
     NotNested {
@@ -1705,4 +1713,13 @@ pub(crate) struct AbiCustomClothedFunction {
 pub(crate) struct AsyncDropWithoutSyncDrop {
     #[primary_span]
     pub span: Span,
+}
+
+#[derive(Diagnostic)]
+#[diag(hir_analysis_no_field_on_type, code = E0609)]
+pub struct NoFieldOnType<'tcx> {
+    #[primary_span]
+    pub span: Span,
+    pub ty: Ty<'tcx>,
+    pub field: Ident,
 }
